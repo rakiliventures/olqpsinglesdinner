@@ -1,0 +1,222 @@
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import InputError from '@/components/input-error'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { useToast } from '@/components/ui/toast'
+import { useForm } from '@inertiajs/react'
+import { useEffect, useMemo, useState } from 'react'
+
+export default function PurchaseTicketDialog({ eventId }: { eventId?: number }) {
+  const [open, setOpen] = useState(false)
+  const { toast } = useToast()
+
+  const form = useForm({
+    event_id: eventId ?? null as unknown as number | null,
+    name: '',
+    gender: '',
+    email: '',
+    whatsapp: '',
+    mpesa_code: '',
+    is_olqp_member: '', // will convert to boolean before submit
+    amount: '4999',
+  })
+
+  const numericAmount = useMemo(() => {
+    const n = Number(form.data.amount)
+    return Number.isFinite(n) ? n : 0
+  }, [form.data.amount])
+
+  const isFullPayment = numericAmount >= 4999
+  const isPartialPayment = numericAmount > 0 && numericAmount < 4999
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+
+    form.transform((data) => ({
+      ...data,
+      is_olqp_member: data.is_olqp_member === 'yes',
+      amount: Number(data.amount),
+    }))
+
+    form.post(route('singles-event.purchase-ticket'), {
+      preserveScroll: true,
+      onSuccess: () => {
+        toast({ title: 'Success', description: 'Ticket details received successfully.' })
+        setOpen(false)
+        form.reset('name', 'gender', 'email', 'whatsapp', 'mpesa_code', 'is_olqp_member', 'amount')
+        form.setData('amount', '4999')
+      },
+    })
+  }
+
+  // Keep badge reactive as user types amount
+  useEffect(() => {}, [numericAmount])
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="min-w-48 h-12 text-lg font-semibold">Register and Get Ticket</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Purchase Ticket</DialogTitle>
+          <DialogDescription>
+            Provide your details to reserve your spot. All fields are required.
+          </DialogDescription>
+        </DialogHeader>
+
+        <Alert className="mb-2 bg-green-100 text-green-800">
+          <AlertDescription className="space-x-10">
+            <p className="space-x-10">PayBill: <strong>7171186</strong></p>
+            <p className="space-x-10">Account: <strong>DINNER</strong></p>
+          </AlertDescription>
+        </Alert>
+
+        <form onSubmit={handleSubmit} className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="fullName">Full name</Label>
+            <Input
+              id="fullName"
+              value={form.data.name}
+              onChange={(e) => form.setData('name', e.target.value)}
+              placeholder="Jane Doe"
+              required
+              aria-invalid={!!form.errors.name || undefined}
+            />
+            <InputError message={form.errors.name} />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="gender">Gender</Label>
+            <Select
+              value={form.data.gender}
+              onValueChange={(v) => form.setData('gender', v)}
+            >
+              <SelectTrigger id="gender" aria-invalid={!!form.errors.gender || undefined}>
+                <SelectValue placeholder="Select gender" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="male">Male</SelectItem>
+                <SelectItem value="female">Female</SelectItem>
+                <SelectItem value="other">Prefer not to say</SelectItem>
+              </SelectContent>
+            </Select>
+            <InputError message={form.errors.gender} />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={form.data.email}
+              onChange={(e) => form.setData('email', e.target.value)}
+              placeholder="jane@example.com"
+              required
+              aria-invalid={!!form.errors.email || undefined}
+            />
+            <InputError message={form.errors.email} />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="whatsapp">WhatsApp number</Label>
+            <Input
+              id="whatsapp"
+              type="tel"
+              value={form.data.whatsapp}
+              onChange={(e) => form.setData('whatsapp', e.target.value)}
+              placeholder="e.g. +254712345678"
+              required
+              aria-invalid={!!form.errors.whatsapp || undefined}
+            />
+            <InputError message={form.errors.whatsapp} />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="mpesa">M-Pesa payment code</Label>
+            <Input
+              id="mpesa"
+              value={form.data.mpesa_code}
+              onChange={(e) => form.setData('mpesa_code', e.target.value.toUpperCase())}
+              placeholder="e.g. QW12AB34CD"
+              required
+              aria-invalid={!!form.errors.mpesa_code || undefined}
+            />
+            <InputError message={form.errors.mpesa_code} />
+          </div>
+
+          <div className="grid gap-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="amount">Amount paid (KES)</Label>
+              {isFullPayment && <Badge>Full payment</Badge>}
+              {!isFullPayment && isPartialPayment && (
+                <Badge variant="destructive">Partial payment</Badge>
+              )}
+            </div>
+            <Input
+              id="amount"
+              inputMode="decimal"
+              type="number"
+              min={0}
+              step={1}
+              value={form.data.amount}
+              onChange={(e) => form.setData('amount', e.target.value)}
+              placeholder="e.g. 4999"
+              required
+              aria-invalid={!!form.errors.amount || undefined}
+            />
+            <InputError message={form.errors.amount} />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="member">OLQP member</Label>
+            <Select
+              value={form.data.is_olqp_member}
+              onValueChange={(v) => form.setData('is_olqp_member', v)}
+            >
+              <SelectTrigger id="member" aria-invalid={!!form.errors.is_olqp_member || undefined}>
+                <SelectValue placeholder="Are you an OLQP member?" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="yes">Yes</SelectItem>
+                <SelectItem value="no">No</SelectItem>
+              </SelectContent>
+            </Select>
+            <InputError message={form.errors.is_olqp_member} />
+          </div>
+
+          <p className="text-xs text-neutral-600 dark:text-neutral-400">
+            Note: You can only purchase one ticket at a time.
+          </p>
+
+          <DialogFooter className="mt-2">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={form.processing}>
+              {form.processing ? 'Submitting…' : 'Continue'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}

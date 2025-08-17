@@ -1,0 +1,6 @@
+.landing {
+        background-image: url('/images/bg.jpg'); /* Note: path relative to public folder */
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+}
