@@ -10,11 +10,11 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useForm } from '@inertiajs/react'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { CheckCircle, XCircle, CreditCard, User, Calendar, Phone, Mail } from 'lucide-react'
+import { CheckCircle, XCircle, CreditCard, User, Calendar, Phone, Mail, Download } from 'lucide-react'
 import { useToast } from '@/components/ui/toast'
 
 interface Attendee {
@@ -32,7 +32,7 @@ interface Payment {
   id: number
   amount: number
   mpesa_code: string
-  status: 'pending' | 'confirmed' | 'failed'
+  status: string
   method: string
   created_at: string
 }
@@ -49,94 +49,209 @@ export default function ManageTicketDialog() {
   const form = useForm({
     mpesa_code: '',
     attendee_id: '',
-    amount: 0
+    amount: 0 as number
+  })
+
+  const findAttendeeForm = useForm({
+    attendee_id: ''
   })
 
   const validAttendeeId = useMemo(() => /^\d+$/.test(attendeeId), [attendeeId])
-  const validMpesaCode = useMemo(() => mpesaCode.trim().length >= 6, [mpesaCode])
+  const validMpesaCode = useMemo(() => {
+    const code = mpesaCode.trim()
+    if (!code) return false
+    
+    // Check minimum length
+    if (code.length < 6) return false
+    
+    // Check maximum length
+    if (code.length > 20) return false
+    
+    // Check if contains only letters and digits
+    const isValidFormat = /^[A-Z0-9]+$/.test(code)
+    if (!isValidFormat) return false
+    
+    return true
+  }, [mpesaCode])
 
-  const totalConfirmedPayments = attendee?.payments
-    ?.filter(p => p.status === 'confirmed')
-    ?.reduce((sum, p) => sum + p.amount, 0) || 0
+  const mpesaCodeError = useMemo(() => {
+    const code = mpesaCode.trim()
+    if (!code) return ''
+    
+    if (code.length < 6) {
+      return 'M-Pesa code should be at least 6 characters'
+    }
+    
+    if (code.length > 20) {
+      return 'M-Pesa code should not exceed 20 characters'
+    }
+    
+    if (!/^[A-Z0-9]+$/.test(code)) {
+      return 'M-Pesa code should only contain letters and numbers'
+    }
+    
+    return ''
+  }, [mpesaCode])
 
-  const totalPendingPayments = attendee?.payments
-    ?.filter(p => p.status === 'pending')
-    ?.reduce((sum, p) => sum + p.amount, 0) || 0
+  const totalConfirmedPayments = useMemo(() => {
+    if (!attendee?.payments) return 0
+    return attendee.payments
+      .filter(p => p.status === 'confirmed')
+      .reduce((sum, p) => sum + Number(p.amount), 0)
+  }, [attendee?.payments])
+
+  const totalPendingPayments = useMemo(() => {
+    if (!attendee?.payments) return 0
+    return attendee.payments
+      .filter(p => p.status === 'pending')
+      .reduce((sum, p) => sum + Number(p.amount), 0)
+  }, [attendee?.payments])
+
+  const remainingAmount = useMemo(() => {
+    return Math.max(0, 4999 - totalConfirmedPayments)
+  }, [totalConfirmedPayments])
 
   const canAddPayment = totalConfirmedPayments < 4999
 
+  // Debug logging for payment calculations
+  useEffect(() => {
+    if (attendee) {
+      console.log('Payment calculations:', {
+        totalConfirmedPayments,
+        totalPendingPayments,
+        remainingAmount,
+        canAddPayment,
+        payments: attendee.payments
+      })
+    }
+  }, [attendee, totalConfirmedPayments, totalPendingPayments, remainingAmount, canAddPayment])
+
+  const handleDownloadTicket = async () => {
+    if (!attendee) return
+    
+    try {
+      // Create a temporary link and trigger download
+      const link = document.createElement('a')
+      link.href = route('singles-event.download-ticket', attendee.id)
+      link.download = `OLQP_Singles_Dinner_2025_Ticket_${attendee.id}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      toast({
+        title: 'Download Started',
+        description: 'Your ticket PDF is being downloaded.',
+        variant: 'default',
+      })
+    } catch (error) {
+      console.error('Download error:', error)
+      toast({
+        title: 'Download Error',
+        description: 'Failed to download ticket. Please try again.',
+        variant: 'destructive',
+      })
+    }
+  }
+
   async function handleFindAttendee(e: React.FormEvent) {
     e.preventDefault()
-    if (!validAttendeeId) return
+    
+    if (!findAttendeeForm.data.attendee_id) return
 
     setIsLoading(true)
     setError('')
 
     try {
-      // In a real app, this would be an API call
-      // For now, we'll simulate finding an attendee
-      const mockAttendee: Attendee = {
-        id: parseInt(attendeeId),
-        name: "John Doe",
-        email: "john@example.com",
-        whatsapp: "+254700000000",
-        gender: "Male",
-        is_olqp_member: true,
-        created_at: "2025-01-15T10:00:00Z",
-        payments: [
-          {
-            id: 1,
-            amount: 2000,
-            mpesa_code: "ABC123",
-            status: "confirmed",
-            method: "mpesa",
-            created_at: "2025-01-15T10:30:00Z"
-          },
-          {
-            id: 2,
-            amount: 1500,
-            mpesa_code: "DEF456",
-            status: "pending",
-            method: "mpesa",
-            created_at: "2025-01-15T11:00:00Z"
-          }
-        ]
+      const response = await fetch(`${route('singles-event.find-attendee')}?attendee_id=${findAttendeeForm.data.attendee_id}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        }
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to find attendee')
       }
 
-      setAttendee(mockAttendee)
+      console.log('Found attendee:', data.attendee)
+      setAttendee(data.attendee)
     } catch (err) {
-      setError('Attendee not found. Please check the ID and try again.')
+      console.log('Error:', err)
+      setError(err instanceof Error ? err.message : 'Attendee not found. Please check the ID and try again.')
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleAddPayment = (e: React.FormEvent) => {
+  const handleAddPayment = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!validMpesaCode || !form.data.amount || !attendee) {
+    const amount = Number(form.data.amount)
+    
+    // Validate M-Pesa code
+    if (!validMpesaCode) {
+      toast({
+        title: 'Validation Error',
+        description: mpesaCodeError || 'Please enter a valid M-Pesa code.',
+        variant: 'destructive',
+      })
+      return
+    }
+    
+    if (!amount || amount <= 0 || !attendee) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please enter a valid payment amount.',
+        variant: 'destructive',
+      })
       return
     }
 
-    form.setData('mpesa_code', mpesaCode)
-    form.setData('attendee_id', attendee.id.toString())
-    form.setData('amount', form.data.amount)
-
-    // In a real app, this would submit to the backend
-    form.post(route('admin.payments.store'), {
-      onSuccess: () => {
-        // Redirect to home page after successful payment
-        window.location.href = '/'
-      },
-      onError: (errors) => {
-        console.error('Payment submission errors:', errors)
-        toast({
-          title: 'Error adding payment',
-          description: 'Please try again or contact support.',
-          variant: 'destructive',
+    try {
+      const response = await fetch(route('singles-event.add-payment'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          attendee_id: attendee.id,
+          mpesa_code: mpesaCode,
+          amount: amount
         })
-      },
-    })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to add payment')
+      }
+
+      // Show success message
+      toast({
+        title: 'Payment Added Successfully',
+        description: data.message,
+        variant: 'default',
+      })
+
+      // Update attendee data with new payment
+      setAttendee(data.attendee)
+      
+      // Reset form
+      setMpesaCode('')
+      form.setData('amount', 0)
+
+      console.log('Payment added successfully:', data.attendee)
+    } catch (err) {
+      console.log('Payment error:', err)
+      toast({
+        title: 'Payment Error',
+        description: err instanceof Error ? err.message : 'Failed to add payment. Please try again.',
+        variant: 'destructive',
+      })
+    }
   }
 
   function handleClose() {
@@ -145,12 +260,21 @@ export default function ManageTicketDialog() {
     setAttendee(null)
     setMpesaCode('')
     setError('')
+    findAttendeeForm.reset()
+  }
+
+  // Handle M-Pesa code input with validation
+  const handleMpesaCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.toUpperCase()
+    // Only allow letters and digits
+    const sanitizedValue = value.replace(/[^A-Z0-9]/g, '')
+    setMpesaCode(sanitizedValue)
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="min-w-48 h-12 text-lg font-semibold text-black">
+        <Button className="min-w-48 h-14 text-lg font-medium bg-gradient-to-r from-slate-700 to-gray-800 hover:from-slate-600 hover:to-gray-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 border-2 border-slate-500 rounded-full">
           Update/View Ticket
         </Button>
       </DialogTrigger>
@@ -158,7 +282,7 @@ export default function ManageTicketDialog() {
         <DialogHeader>
           <DialogTitle>Manage Your Ticket</DialogTitle>
           <DialogDescription>
-            Enter your attendee ID to view ticket details and manage payments.
+            Enter your atten ID to view ticket details and manage payments.
           </DialogDescription>
         </DialogHeader>
 
@@ -170,8 +294,8 @@ export default function ManageTicketDialog() {
               <Input
                 id="attendee-id"
                 type="text"
-                value={attendeeId}
-                onChange={(e) => setAttendeeId(e.target.value)}
+                value={findAttendeeForm.data.attendee_id}
+                onChange={(e) => findAttendeeForm.setData('attendee_id', e.target.value)}
                 placeholder="Enter your attendee ID number"
                 className="h-8 text-xs"
                 required
@@ -191,7 +315,7 @@ export default function ManageTicketDialog() {
               <Button type="button" variant="outline" size="sm" onClick={handleClose}>
                 Cancel
               </Button>
-              <Button type="submit" size="sm" disabled={!validAttendeeId || isLoading}>
+              <Button type="submit" size="sm" disabled={!findAttendeeForm.data.attendee_id || isLoading}>
                 {isLoading ? 'Finding...' : 'Find Ticket'}
               </Button>
             </DialogFooter>
@@ -265,7 +389,7 @@ export default function ManageTicketDialog() {
                   </div>
                   <div className="bg-blue-50 p-1.5 rounded text-xs">
                     <div className="text-base font-bold text-blue-600">
-                      Ksh. {(4999 - totalConfirmedPayments).toLocaleString()}
+                      Ksh. {remainingAmount.toLocaleString()}
                     </div>
                     <div className="text-xs text-blue-700">Remaining</div>
                   </div>
@@ -277,13 +401,25 @@ export default function ManageTicketDialog() {
                     <CheckCircle className="size-4 text-green-600 mx-auto mb-1" />
                     <p className="text-green-800 font-medium">Payment Complete!</p>
                     <p className="text-green-600">Your ticket is fully paid and confirmed.</p>
+                    
+                    {/* Download Ticket Button */}
+                    <div className="mt-3">
+                      <Button
+                        onClick={handleDownloadTicket}
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1 h-7"
+                      >
+                        <Download className="size-3 mr-1" />
+                        Download Ticket PDF
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <div className="text-center p-2 bg-yellow-50 rounded text-xs">
                     <XCircle className="size-4 text-yellow-600 mx-auto mb-1" />
                     <p className="text-yellow-800 font-medium">Payment Incomplete</p>
                     <p className="text-yellow-600">
-                      You need Ksh. {(4999 - totalConfirmedPayments).toLocaleString()} more.
+                      You need Ksh. {remainingAmount.toLocaleString()} more.
                     </p>
                   </div>
                 )}
@@ -332,14 +468,17 @@ export default function ManageTicketDialog() {
                       <Input
                         id="mpesa-code"
                         value={mpesaCode}
-                        onChange={(e) => setMpesaCode(e.target.value.toUpperCase())}
+                        onChange={handleMpesaCodeChange}
                         placeholder="Enter your M-Pesa transaction code"
-                        className="h-7 text-xs"
+                        className={`h-7 text-xs ${mpesaCodeError && mpesaCode ? 'border-red-500' : ''}`}
                         required
                       />
                       <p className="text-xs text-gray-500">
                         Enter the transaction code from your M-Pesa payment confirmation.
                       </p>
+                      {mpesaCodeError && mpesaCode && (
+                        <p className="text-xs text-red-600">{mpesaCodeError}</p>
+                      )}
                     </div>
 
                     <div className="grid gap-1">
@@ -348,7 +487,10 @@ export default function ManageTicketDialog() {
                         id="payment-amount"
                         type="number"
                         value={form.data.amount || ''}
-                        onChange={(e) => form.setData('amount', parseFloat(e.target.value) || 0)}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value)
+                          form.setData('amount', isNaN(value) ? 0 : value)
+                        }}
                         placeholder="Enter payment amount"
                         className="h-7 text-xs"
                         min="0"
@@ -364,7 +506,11 @@ export default function ManageTicketDialog() {
                       <Button type="button" variant="outline" size="sm" onClick={handleClose}>
                         Close
                       </Button>
-                      <Button type="submit" size="sm" disabled={!validMpesaCode || !form.data.amount || form.processing}>
+                      <Button 
+                        type="submit" 
+                        size="sm" 
+                        disabled={!validMpesaCode || !form.data.amount || form.processing}
+                      >
                         {form.processing ? 'Adding...' : 'Add Payment'}
                       </Button>
                     </div>

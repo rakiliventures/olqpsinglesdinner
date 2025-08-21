@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Attendee;
 use App\Models\Event;
 use App\Models\Payment;
+use App\Services\TicketPdfService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -19,6 +21,99 @@ class EventsController extends Controller
         return Inertia::render('Events/SinglesEvent');
     }
 
+    public function findAttendee(Request $request)
+    {
+        $validated = $request->validate([
+            'attendee_id' => ['required', 'integer', 'exists:attendees,id'],
+        ]);
+
+        $attendee = Attendee::with('payments')
+            ->where('id', $validated['attendee_id'])
+            ->first();
+
+        if (!$attendee) {
+            return response()->json([
+                'error' => 'Attendee not found. Please check the ID and try again.'
+            ], 404);
+        }
+
+        return response()->json([
+            'attendee' => $attendee
+        ]);
+    }
+
+    public function addPayment(Request $request)
+    {
+        $validated = $request->validate([
+            'attendee_id' => ['required', 'integer', 'exists:attendees,id'],
+            'mpesa_code' => [
+                'required', 
+                'string', 
+                'max:20',
+                'min:6',
+                'regex:/^[A-Z0-9]+$/',
+                'unique:payments,mpesa_code'
+            ],
+            'amount' => ['required', 'numeric', 'min:0'],
+        ], [
+            'mpesa_code.regex' => 'M-Pesa code should only contain letters and numbers.',
+            'mpesa_code.unique' => 'This M-Pesa code has already been used. Please check your code and try again.',
+            'mpesa_code.min' => 'M-Pesa code should be at least 6 characters long.',
+            'mpesa_code.max' => 'M-Pesa code should not exceed 20 characters.',
+        ]);
+
+        $attendee = Attendee::with('payments')->find($validated['attendee_id']);
+
+        if (!$attendee) {
+            return response()->json([
+                'error' => 'Attendee not found.'
+            ], 404);
+        }
+
+        // Check if total confirmed payments would exceed 4999
+        $totalConfirmedPayments = $attendee->payments()
+            ->where('status', 'confirmed')
+            ->sum('amount');
+
+        if (($totalConfirmedPayments + $validated['amount']) > 4999) {
+            return response()->json([
+                'error' => 'Payment amount would exceed the total required amount of Ksh. 4,999.'
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $payment = $attendee->payments()->create([
+                'amount' => $validated['amount'],
+                'mpesa_code' => $validated['mpesa_code'],
+                'status' => 'pending',
+                'method' => 'mpesa',
+            ]);
+
+            DB::commit();
+
+            // Return updated attendee data
+            $updatedAttendee = Attendee::with('payments')->find($attendee->id);
+
+            return response()->json([
+                'message' => 'Payment has been successfully recorded and is now awaiting confirmation.',
+                'attendee' => $updatedAttendee
+            ]);
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Failed to add payment', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'error' => 'We could not process your payment at this time. Please try again.'
+            ], 500);
+        }
+    }
+
     public function purchaseTicket(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -29,7 +124,19 @@ class EventsController extends Controller
             'gender' => ['required', 'string', 'max:255'],
             'is_olqp_member' => ['required', 'boolean'],
             'amount' => ['required', 'numeric', 'min:0'],
-            'mpesa_code' => ['required', 'string', 'max:255'],
+            'mpesa_code' => [
+                'required', 
+                'string', 
+                'max:20',
+                'min:6',
+                'regex:/^[A-Z0-9]+$/',
+                'unique:payments,mpesa_code'
+            ],
+        ], [
+            'mpesa_code.regex' => 'M-Pesa code should only contain letters and numbers.',
+            'mpesa_code.unique' => 'This M-Pesa code has already been used. Please check your code and try again.',
+            'mpesa_code.min' => 'M-Pesa code should be at least 6 characters long.',
+            'mpesa_code.max' => 'M-Pesa code should not exceed 20 characters.',
         ]);
 
         $event = null;
@@ -80,5 +187,56 @@ class EventsController extends Controller
         }
 
         return back()->with('success', 'Ticket recorded successfully.');
+    }
+
+    public function downloadTicket(Attendee $attendee)
+    {
+        // Load attendee with payments and event
+        $attendee = $attendee->load(['payments', 'event']);
+        
+        // Calculate total confirmed payments
+        $totalConfirmedAmount = $attendee->payments
+            ->where('status', 'confirmed')
+            ->sum('amount');
+        
+        // Check if attendee is fully paid
+        if ($totalConfirmedAmount < 4999) {
+            abort(403, 'Ticket download is only available for fully paid attendees.');
+        }
+        
+        // Get the latest confirmed payment for the ticket
+        $latestPayment = $attendee->payments
+            ->where('status', 'confirmed')
+            ->sortByDesc('created_at')
+            ->first();
+        
+        if (!$latestPayment) {
+            abort(404, 'No confirmed payment found for this attendee.');
+        }
+        
+        try {
+            $ticketService = new TicketPdfService();
+            $pdfPath = $ticketService->generateTicketPdf($attendee, $latestPayment);
+            
+            if (!$pdfPath || !file_exists($pdfPath)) {
+                abort(500, 'Failed to generate ticket PDF.');
+            }
+            
+            $filename = "OLQP_Singles_Dinner_2025_Ticket_{$attendee->id}.pdf";
+            
+            return response()->download($pdfPath, $filename, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"'
+            ])->deleteFileAfterSend(true);
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to download ticket PDF', [
+                'attendee_id' => $attendee->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            abort(500, 'Failed to generate ticket PDF. Please try again.');
+        }
     }
 }

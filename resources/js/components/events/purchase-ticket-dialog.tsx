@@ -47,8 +47,51 @@ export default function PurchaseTicketDialog({ eventId }: { eventId?: number }) 
   const isFullPayment = numericAmount >= 4999
   const isPartialPayment = numericAmount > 0 && numericAmount < 4999
 
+  // M-Pesa code validation
+  const mpesaCodeValidation = useMemo(() => {
+    const code = form.data.mpesa_code
+    if (!code) return { isValid: false, message: '' }
+    
+    // Check if contains only letters and digits
+    const isValidFormat = /^[A-Z0-9]+$/.test(code)
+    if (!isValidFormat) {
+      return { 
+        isValid: false, 
+        message: 'M-Pesa code should only contain letters and numbers' 
+      }
+    }
+    
+    // Check minimum length
+    if (code.length < 6) {
+      return { 
+        isValid: false, 
+        message: 'M-Pesa code should be at least 6 characters' 
+      }
+    }
+    
+    // Check maximum length
+    if (code.length > 20) {
+      return { 
+        isValid: false, 
+        message: 'M-Pesa code should not exceed 20 characters' 
+      }
+    }
+    
+    return { isValid: true, message: '' }
+  }, [form.data.mpesa_code])
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+
+    // Validate M-Pesa code before submission
+    if (!mpesaCodeValidation.isValid) {
+      toast({ 
+        title: 'Validation Error', 
+        description: mpesaCodeValidation.message,
+        variant: 'destructive'
+      })
+      return
+    }
 
     form.transform((data) => ({
       ...data,
@@ -67,13 +110,23 @@ export default function PurchaseTicketDialog({ eventId }: { eventId?: number }) 
     })
   }
 
+  // Handle M-Pesa code input with validation
+  function handleMpesaCodeChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = e.target.value.toUpperCase()
+    // Only allow letters and digits
+    const sanitizedValue = value.replace(/[^A-Z0-9]/g, '')
+    form.setData('mpesa_code', sanitizedValue)
+  }
+
   // Keep badge reactive as user types amount
   useEffect(() => {}, [numericAmount])
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="min-w-48 h-12 text-lg font-semibold">Register and Get Ticket</Button>
+        <Button className="min-w-48 h-14 text-lg font-medium bg-gradient-to-r from-slate-600 to-gray-700 hover:from-slate-500 hover:to-gray-600 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 border-2 border-slate-400 rounded-full">
+          Register and Get Ticket
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -155,12 +208,19 @@ export default function PurchaseTicketDialog({ eventId }: { eventId?: number }) 
             <Input
               id="mpesa"
               value={form.data.mpesa_code}
-              onChange={(e) => form.setData('mpesa_code', e.target.value.toUpperCase())}
+              onChange={handleMpesaCodeChange}
               placeholder="e.g. QW12AB34CD"
               required
-              aria-invalid={!!form.errors.mpesa_code || undefined}
+              aria-invalid={!!form.errors.mpesa_code || !mpesaCodeValidation.isValid || undefined}
+              className={!mpesaCodeValidation.isValid && form.data.mpesa_code ? 'border-red-500' : ''}
             />
+            {!mpesaCodeValidation.isValid && form.data.mpesa_code && (
+              <p className="text-sm text-red-600">{mpesaCodeValidation.message}</p>
+            )}
             <InputError message={form.errors.mpesa_code} />
+            <p className="text-xs text-gray-500">
+              Only letters and numbers allowed. Minimum 6 characters.
+            </p>
           </div>
 
           <div className="grid gap-2">
@@ -211,7 +271,10 @@ export default function PurchaseTicketDialog({ eventId }: { eventId?: number }) 
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={form.processing}>
+            <Button 
+              type="submit" 
+              disabled={form.processing || !mpesaCodeValidation.isValid}
+            >
               {form.processing ? 'Submitting…' : 'Continue'}
             </Button>
           </DialogFooter>
