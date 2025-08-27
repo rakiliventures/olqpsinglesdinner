@@ -65,8 +65,8 @@ export default function AdminAttendeesIndex() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Ticket Number</TableHead>
                 <TableHead>Name</TableHead>
-                <TableHead>Event</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>WhatsApp</TableHead>
                 <TableHead>OLQP</TableHead>
@@ -78,7 +78,7 @@ export default function AdminAttendeesIndex() {
             <TableBody>
               {attendees.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-sm text-neutral-600 dark:text-neutral-400">
+                  <TableCell colSpan={8} className="text-sm text-neutral-600 dark:text-neutral-400">
                     No attendees found.
                   </TableCell>
                 </TableRow>
@@ -86,10 +86,12 @@ export default function AdminAttendeesIndex() {
               {attendees.map((a) => (
                 <TableRow key={a.id}>
                   <TableCell>
+                    <div className="font-mono font-medium text-sm">#{a.id}</div>
+                  </TableCell>
+                  <TableCell>
                     <div className="font-medium">{a.name}</div>
                     {a.gender && <div className="text-xs text-neutral-600 dark:text-neutral-400">{a.gender}</div>}
                   </TableCell>
-                  <TableCell>{a.event_name ?? props.event?.name ?? '-'}</TableCell>
                   <TableCell>{a.email}</TableCell>
                   <TableCell>{a.whatsapp}</TableCell>
                   <TableCell>{a.is_olqp_member ? 'Yes' : 'No'}</TableCell>

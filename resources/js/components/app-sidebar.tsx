@@ -13,11 +13,7 @@ const mainNavItems: NavItem[] = [
         href: '/dashboard',
         icon: LayoutGrid,
     },
-    {
-        title: 'Events',
-        href: '/events',
-        icon: LayoutGrid,
-    },
+   
     {
         title: 'Attendees',
         href: '/attendees',
@@ -28,6 +24,12 @@ const mainNavItems: NavItem[] = [
         href: '/payments',
         icon: LayoutGrid,
     },
+    {
+        title: 'Events',
+        href: '/events',
+        icon: LayoutGrid,
+    },
+   
     // {
     //     title: 'Reports',
     //     href: '/reports',
@@ -38,7 +40,7 @@ const mainNavItems: NavItem[] = [
 const footerNavItems: NavItem[] = [
     {
         title: 'Admins',
-        href: 'users',
+        href: '/users',
         icon: Folder,
     },
 ];
