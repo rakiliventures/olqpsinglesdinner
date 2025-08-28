@@ -21,6 +21,8 @@ class Payment extends Model
         'mpesa_code',
         'status',
         'method',
+        'actioned_by',
+        'actioned_at',
     ];
 
     /**
@@ -28,10 +30,16 @@ class Payment extends Model
      */
     protected $casts = [
         'amount' => 'decimal:2',
+        'actioned_at' => 'datetime',
     ];
 
     public function attendee(): BelongsTo
     {
         return $this->belongsTo(Attendee::class);
+    }
+
+    public function actionedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'actioned_by');
     }
 }
