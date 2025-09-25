@@ -33,7 +33,7 @@ export default function SinglesEvent() {
               <div className="flex items-center justify-between">
                 <div className="text-white">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-lg font-bold tracking-widest text-yellow-500">OLQP PARISH</h2>
+                    <h2 className="text-sm sm:text-lg font-bold tracking-widest text-yellow-500">OLQP PARISH</h2>
                   </div>
                 </div>
                 
@@ -43,7 +43,7 @@ export default function SinglesEvent() {
                     <CountdownTimer targetDate="2025-10-31T18:00:00" />
                   </div>
                   <div className="text-center">
-                    <div className="text-sm font-bold text-yellow-500">October 31, 2025</div>
+                    <div className="text-xs sm:text-sm font-bold text-yellow-500">October 31, 2025</div>
                     <div className="text-xs text-yellow-400/90">6:00 PM - 12:00 AM</div>
                   </div>
                 </div>
@@ -61,16 +61,16 @@ export default function SinglesEvent() {
                   {/* Enhanced Hero Title */}
                   <div className="text-center lg:text-left">
                     <div className="flex items-center justify-center lg:justify-start gap-2 mb-3">
-                      <SparklesIcon className="size-5 text-yellow-500 animate-pulse" />
-                      <p className="text-yellow-500 text-sm font-bold tracking-widest uppercase">Welcome to the</p>
-                      <SparklesIcon className="size-5 text-yellow-500 animate-pulse" />
+                      <SparklesIcon className="size-4 sm:size-5 text-yellow-500 animate-pulse" />
+                      <p className="text-yellow-500 text-xs sm:text-sm font-bold tracking-widest uppercase">Welcome to the</p>
+                      <SparklesIcon className="size-4 sm:size-5 text-yellow-500 animate-pulse" />
                     </div>
                     <div className="flex items-center justify-center lg:justify-start gap-2 mb-2">
-                      <h1 className="text-2xl lg:text-3xl font-black text-gray-100 tracking-tight leading-tight font-serif">
+                      <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-gray-100 tracking-tight leading-tight font-serif">
                         OLQP SINGLES DINNER 2025
                       </h1>
                     </div>
-                    <p className="text-lg text-yellow-400 mb-5 leading-relaxed font-light italic font-serif">
+                    <p className="text-sm sm:text-lg text-yellow-400 mb-5 leading-relaxed font-light italic font-serif">
                       An evening of networking, entertainment and unforgettable memories. 
                       Open to all singles looking for meaningful connections.
                     </p>
@@ -78,10 +78,10 @@ export default function SinglesEvent() {
 
                   {/* Enhanced Pricing & Payment Card */}
                   <div className="bg-gradient-to-r from-yellow-500/8 to-amber-500/8 backdrop-blur-lg rounded-xl p-4 border border-yellow-500/30 shadow-xl hover:shadow-2xl transition-all duration-500">
-                    <h3 className="text-gray-50 font-bold text-lg mb-3 text-center tracking-wide">Payment Details</h3>
+                    <h3 className="text-gray-50 font-bold text-base sm:text-lg mb-3 text-center tracking-wide">Payment Details</h3>
                     <div className="text-center mb-3">
-                      <div className="text-3xl font-black text-yellow-500 mb-1">Ksh. 4,999</div>
-                      <div className="text-yellow-400 text-base font-semibold">Registration Fee</div>
+                      <div className="text-2xl sm:text-3xl font-black text-yellow-500 mb-1">Ksh. 4,999</div>
+                      <div className="text-yellow-400 text-sm sm:text-base font-semibold">Registration Fee</div>
                       <p className="text-yellow-300/80 text-xs mt-1 italic">
                         You can book early with as low as Ksh. 1,000 and pay the balance later
                       </p>
@@ -89,25 +89,25 @@ export default function SinglesEvent() {
                     <div className="grid grid-cols-2 gap-2">
                       <div className="p-2 bg-gradient-to-r from-yellow-500/15 to-amber-500/15 rounded-lg border border-yellow-500/40 hover:border-yellow-400/60 transition-all duration-300">
                         <div className="text-yellow-400 font-bold mb-1 text-xs tracking-wide">M-Pesa Paybill</div>
-                        <div className="text-lg font-black text-gray-300">7171186</div>
+                        <div className="text-base sm:text-lg font-black text-gray-300">7171186</div>
                       </div>
                       <div className="p-2 bg-gradient-to-r from-yellow-500/15 to-amber-500/15 rounded-lg border border-yellow-500/40 hover:border-yellow-400/60 transition-all duration-300">
                         <div className="text-yellow-400 font-bold mb-1 text-xs tracking-wide">Account</div>
-                        <div className="text-lg font-black text-gray-300">DINNER</div>
+                        <div className="text-base sm:text-lg font-black text-gray-300">DINNER</div>
                       </div>
                     </div>
                   </div>
 
                   {/* Enhanced Action Buttons */}
-                  <div className="grid grid-cols-2 gap-2 sm:gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div className="text-center group">
-                      <p className="text-yellow-400 text-xs mb-1 sm:mb-2 font-bold uppercase tracking-widest group-hover:text-yellow-300 transition-colors duration-300 leading-tight">Paid for a new ticket?</p>
+                      <p className="text-yellow-400 text-xs mb-2 font-bold uppercase tracking-widest group-hover:text-yellow-300 transition-colors duration-300 leading-tight">Paid for a new ticket?</p>
                       <div className="transform group-hover:scale-105 transition-transform duration-300">
                         <PurchaseTicketDialog />
                       </div>
                     </div>
                     <div className="text-center group">
-                      <p className="text-yellow-400 text-xs mb-1 sm:mb-2 font-bold uppercase tracking-widest group-hover:text-yellow-300 transition-colors duration-300 leading-tight">Topped up existing ticket?</p>
+                      <p className="text-yellow-400 text-xs mb-2 font-bold uppercase tracking-widest group-hover:text-yellow-300 transition-colors duration-300 leading-tight">Topped up existing ticket?</p>
                       <div className="transform group-hover:scale-105 transition-transform duration-300">
                         <ManageTicketDialog />
                       </div>
@@ -118,8 +118,8 @@ export default function SinglesEvent() {
                 {/* Right Column - Enhanced Event Info Card */}
                 <div className="bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-2xl rounded-2xl p-5 shadow-2xl border border-yellow-500/30 hover:shadow-3xl transition-all duration-500">
                   <div className="text-center mb-5">
-                    <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-amber-500 text-black px-4 py-2 rounded-full text-sm font-black tracking-wide shadow-lg">
-                      <WineIcon className="size-4" />
+                    <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-amber-500 text-black px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-black tracking-wide shadow-lg">
+                      <WineIcon className="size-3 sm:size-4" />
                       Event Information
                     </div>
                   </div>
@@ -128,30 +128,30 @@ export default function SinglesEvent() {
                   <div className="grid grid-cols-1 gap-4 mb-5">
                     <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-yellow-500/10 to-amber-500/10 rounded-xl border border-yellow-500/30 hover:border-yellow-400/50 transition-all duration-300 group">
                       <div className="bg-yellow-500/20 p-2 rounded-full group-hover:bg-yellow-500/30 transition-colors duration-300">
-                        <CalendarIcon className="size-5 text-yellow-500" />
+                        <CalendarIcon className="size-4 sm:size-5 text-yellow-500" />
                       </div>
                       <div>
-                        <div className="font-bold text-yellow-400 text-sm tracking-wide">Date & Time</div>
+                        <div className="font-bold text-yellow-400 text-xs sm:text-sm tracking-wide">Date & Time</div>
                         <div className="text-yellow-300/90 text-xs">Oct 31, 2025 • 6:00 PM - 12:00 AM</div>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-yellow-500/10 to-amber-500/10 rounded-xl border border-yellow-500/30 hover:border-yellow-400/50 transition-all duration-300 group">
                       <div className="bg-yellow-500/20 p-2 rounded-full group-hover:bg-yellow-500/30 transition-colors duration-300">
-                        <MapPinIcon className="size-5 text-yellow-500" />
+                        <MapPinIcon className="size-4 sm:size-5 text-yellow-500" />
                       </div>
                       <div>
-                        <div className="font-bold text-yellow-400 text-sm tracking-wide">Venue</div>
+                        <div className="font-bold text-yellow-400 text-xs sm:text-sm tracking-wide">Venue</div>
                         <div className="text-yellow-300/90 text-xs">The Boma Hotel, South C </div>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-yellow-500/10 to-amber-500/10 rounded-xl border border-yellow-500/30 hover:border-yellow-400/50 transition-all duration-300 group">
                       <div className="bg-yellow-500/20 p-2 rounded-full group-hover:bg-yellow-500/30 transition-colors duration-300">
-                        <TrophyIcon className="size-5 text-yellow-500" />
+                        <TrophyIcon className="size-4 sm:size-5 text-yellow-500" />
                       </div>
                       <div>
-                        <div className="font-bold text-yellow-400 text-sm tracking-wide">Highlights</div>
+                        <div className="font-bold text-yellow-400 text-xs sm:text-sm tracking-wide">Highlights</div>
                         <div className="text-yellow-300/90 text-xs">Networking • Entertainment</div>
                       </div>
                     </div>
@@ -160,8 +160,8 @@ export default function SinglesEvent() {
                   {/* Enhanced Open to All Information */}
                   <div className="text-center p-3 bg-gradient-to-r from-yellow-500/10 to-amber-500/10 rounded-xl border border-yellow-500/30 mb-4 hover:border-yellow-400/50 transition-all duration-300 group">
                     <div className="flex items-center justify-center gap-2 mb-2">
-                      <UsersIcon className="size-4 text-yellow-500 group-hover:text-yellow-400 transition-colors duration-300" />
-                      <span className="font-bold text-yellow-400 text-sm tracking-wide group-hover:text-yellow-300 transition-colors duration-300">Open to All</span>
+                      <UsersIcon className="size-3 sm:size-4 text-yellow-500 group-hover:text-yellow-400 transition-colors duration-300" />
+                      <span className="font-bold text-yellow-400 text-xs sm:text-sm tracking-wide group-hover:text-yellow-300 transition-colors duration-300">Open to All</span>
                     </div>
                     <p className="text-yellow-300/90 text-xs italic">Even those from outside OLQP are welcome to join us!</p>
                   </div>
@@ -169,12 +169,12 @@ export default function SinglesEvent() {
                   {/* Enhanced Contact Info */}
                   <div className="text-center p-3 bg-gradient-to-r from-yellow-500/10 to-amber-500/10 rounded-xl border border-yellow-500/30 hover:border-yellow-400/50 transition-all duration-300 group">
                     <div className="flex items-center justify-center gap-2 mb-2">
-                      <PhoneIcon className="size-4 text-yellow-500 group-hover:text-yellow-400 transition-colors duration-300" />
-                      <span className="font-bold text-yellow-400 text-sm tracking-wide group-hover:text-yellow-300 transition-colors duration-300">Contact Us</span>
+                      <PhoneIcon className="size-3 sm:size-4 text-yellow-500 group-hover:text-yellow-400 transition-colors duration-300" />
+                      <span className="font-bold text-yellow-400 text-xs sm:text-sm tracking-wide group-hover:text-yellow-300 transition-colors duration-300">Contact Us</span>
                     </div>
                     <a 
                       href="tel:+254717186600" 
-                      className="text-yellow-500 font-black text-lg group-hover:text-yellow-400 transition-colors duration-300 hover:underline cursor-pointer"
+                      className="text-yellow-500 font-black text-base sm:text-lg group-hover:text-yellow-400 transition-colors duration-300 hover:underline cursor-pointer"
                     >
                       0717186600
                     </a>
