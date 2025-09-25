@@ -71,46 +71,43 @@ export default function SinglesEvent() {
                       </h1>
                     </div>
                     <p className="text-lg text-yellow-400 mb-5 leading-relaxed font-light italic font-serif">
-                      An evening of connection, fine dining, and unforgettable memories. 
+                      An evening of networking, entertainment and unforgettable memories. 
                       Open to all singles looking for meaningful connections.
                     </p>
                   </div>
 
                   {/* Enhanced Pricing & Payment Card */}
-                  <div className="bg-gradient-to-r from-yellow-500/8 to-amber-500/8 backdrop-blur-lg rounded-2xl p-5 border border-yellow-500/30 shadow-2xl hover:shadow-3xl transition-all duration-500">
-                    <h3 className="text-gray-50 font-bold text-xl mb-4 text-center tracking-wide">Payment Details</h3>
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div className="text-center group">
-                        <div className="text-2xl font-black text-yellow-500 group-hover:text-yellow-400 transition-colors duration-300">Ksh. 4,999</div>
-                        <div className="text-yellow-400 text-sm font-semibold">Registration</div>
-                      </div>
-                      <div className="text-center group">
-                        <div className="text-2xl font-black text-yellow-500 group-hover:text-yellow-400 transition-colors duration-300">Ksh. 1,000</div>
-                        <div className="text-yellow-400 text-sm font-semibold">Booking Fee</div>
-                      </div>
+                  <div className="bg-gradient-to-r from-yellow-500/8 to-amber-500/8 backdrop-blur-lg rounded-xl p-4 border border-yellow-500/30 shadow-xl hover:shadow-2xl transition-all duration-500">
+                    <h3 className="text-gray-50 font-bold text-lg mb-3 text-center tracking-wide">Payment Details</h3>
+                    <div className="text-center mb-3">
+                      <div className="text-3xl font-black text-yellow-500 mb-1">Ksh. 4,999</div>
+                      <div className="text-yellow-400 text-base font-semibold">Registration Fee</div>
+                      <p className="text-yellow-300/80 text-xs mt-1 italic">
+                        You can book early with as low as Ksh. 1,000 and pay the balance later
+                      </p>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="p-3 bg-gradient-to-r from-yellow-500/15 to-amber-500/15 rounded-xl border border-yellow-500/40 hover:border-yellow-400/60 transition-all duration-300">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="p-2 bg-gradient-to-r from-yellow-500/15 to-amber-500/15 rounded-lg border border-yellow-500/40 hover:border-yellow-400/60 transition-all duration-300">
                         <div className="text-yellow-400 font-bold mb-1 text-xs tracking-wide">M-Pesa Paybill</div>
-                        <div className="text-xl font-black text-gray-300">7171186</div>
+                        <div className="text-lg font-black text-gray-300">7171186</div>
                       </div>
-                      <div className="p-3 bg-gradient-to-r from-yellow-500/15 to-amber-500/15 rounded-xl border border-yellow-500/40 hover:border-yellow-400/60 transition-all duration-300">
+                      <div className="p-2 bg-gradient-to-r from-yellow-500/15 to-amber-500/15 rounded-lg border border-yellow-500/40 hover:border-yellow-400/60 transition-all duration-300">
                         <div className="text-yellow-400 font-bold mb-1 text-xs tracking-wide">Account</div>
-                        <div className="text-xl font-black text-gray-300">DINNER</div>
+                        <div className="text-lg font-black text-gray-300">DINNER</div>
                       </div>
                     </div>
                   </div>
 
                   {/* Enhanced Action Buttons */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-4">
                     <div className="text-center group">
-                      <p className="text-yellow-400 text-xs mb-2 font-bold uppercase tracking-widest group-hover:text-yellow-300 transition-colors duration-300">Paid for a new ticket?</p>
+                      <p className="text-yellow-400 text-xs mb-1 sm:mb-2 font-bold uppercase tracking-widest group-hover:text-yellow-300 transition-colors duration-300 leading-tight">Paid for a new ticket?</p>
                       <div className="transform group-hover:scale-105 transition-transform duration-300">
                         <PurchaseTicketDialog />
                       </div>
                     </div>
                     <div className="text-center group">
-                      <p className="text-yellow-400 text-xs mb-2 font-bold uppercase tracking-widest group-hover:text-yellow-300 transition-colors duration-300">Topped up existing ticket?</p>
+                      <p className="text-yellow-400 text-xs mb-1 sm:mb-2 font-bold uppercase tracking-widest group-hover:text-yellow-300 transition-colors duration-300 leading-tight">Topped up existing ticket?</p>
                       <div className="transform group-hover:scale-105 transition-transform duration-300">
                         <ManageTicketDialog />
                       </div>
@@ -145,7 +142,7 @@ export default function SinglesEvent() {
                       </div>
                       <div>
                         <div className="font-bold text-yellow-400 text-sm tracking-wide">Venue</div>
-                        <div className="text-yellow-300/90 text-xs">The Edge, South C</div>
+                        <div className="text-yellow-300/90 text-xs">The Boma Hotel, South C </div>
                       </div>
                     </div>
 
@@ -155,7 +152,7 @@ export default function SinglesEvent() {
                       </div>
                       <div>
                         <div className="font-bold text-yellow-400 text-sm tracking-wide">Highlights</div>
-                        <div className="text-yellow-300/90 text-xs">Networking • Fine Dining • Entertainment</div>
+                        <div className="text-yellow-300/90 text-xs">Networking • Entertainment</div>
                       </div>
                     </div>
                   </div>
@@ -175,7 +172,12 @@ export default function SinglesEvent() {
                       <PhoneIcon className="size-4 text-yellow-500 group-hover:text-yellow-400 transition-colors duration-300" />
                       <span className="font-bold text-yellow-400 text-sm tracking-wide group-hover:text-yellow-300 transition-colors duration-300">Contact Us</span>
                     </div>
-                    <div className="text-yellow-500 font-black text-lg group-hover:text-yellow-400 transition-colors duration-300">0777111000</div>
+                    <a 
+                      href="tel:+254717186600" 
+                      className="text-yellow-500 font-black text-lg group-hover:text-yellow-400 transition-colors duration-300 hover:underline cursor-pointer"
+                    >
+                      0717186600
+                    </a>
                     <p className="text-yellow-300/90 text-xs mt-1 italic">For inquiries and support</p>
                   </div>
                 </div>
