@@ -56,7 +56,6 @@ export default function ManageTicketDialog() {
     attendee_id: ''
   })
 
-  const validAttendeeId = useMemo(() => /^\d+$/.test(attendeeId), [attendeeId])
   const validMpesaCode = useMemo(() => {
     const code = mpesaCode.trim()
     if (!code) return false
