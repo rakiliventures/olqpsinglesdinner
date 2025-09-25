@@ -33,9 +33,10 @@ export default function AdminAttendeesIndex() {
   const attendees = props.attendees || []
   const eventAmount = props.event?.amount ?? 0
 
+  const deleteForm = useForm({})
+
   function submitDelete(id: number) {
-    const form = useForm({})
-    form.delete(route('admin.attendees.destroy', id), {
+    deleteForm.delete(route('admin.attendees.destroy', id), {
       preserveScroll: true,
       onSuccess: () => toast({ title: 'Attendee deleted' }),
     })

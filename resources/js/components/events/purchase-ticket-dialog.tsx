@@ -124,7 +124,7 @@ export default function PurchaseTicketDialog({ eventId }: { eventId?: number }) 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="min-w-48 h-14 text-lg font-medium bg-gradient-to-r from-slate-600 to-gray-700 hover:from-slate-500 hover:to-gray-600 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 border-2 border-slate-400 rounded-full">
+        <Button className="w-full sm:min-w-48 h-12 sm:h-14 text-sm sm:text-lg font-medium bg-gradient-to-r from-slate-600 to-gray-700 hover:from-slate-500 hover:to-gray-600 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 border-2 border-slate-400 rounded-full">
           Register and Get Ticket
         </Button>
       </DialogTrigger>

@@ -24,9 +24,10 @@ export default function AdminEventsIndex() {
   const { props } = usePage<{ events: EventDto[]; flash?: { success?: string } }>()
   const events = (props.events || []).map((e) => ({ ...e, amount: Number(e.amount) }))
 
+  const deleteForm = useForm({})
+
   function submitDelete(id: number) {
-    const form = useForm({})
-    form.delete(route('admin.events.destroy', id), {
+    deleteForm.delete(route('admin.events.destroy', id), {
       preserveScroll: true,
       onSuccess: () => toast({ title: 'Event deleted' }),
     })
