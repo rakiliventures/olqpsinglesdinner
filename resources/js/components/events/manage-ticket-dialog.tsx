@@ -277,26 +277,26 @@ export default function ManageTicketDialog() {
           Update/View Ticket
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-md sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Manage Your Ticket</DialogTitle>
-          <DialogDescription>
-            Enter your atten ID to view ticket details and manage payments.
+          <DialogTitle className="text-lg sm:text-xl">Manage Your Ticket</DialogTitle>
+          <DialogDescription className="text-sm">
+            Enter your attendee ID to view ticket details and manage payments.
           </DialogDescription>
         </DialogHeader>
 
         {!attendee ? (
           // Step 1: Enter Attendee ID
-          <form onSubmit={handleFindAttendee} className="grid gap-2">
-            <div className="grid gap-1">
-              <Label htmlFor="attendee-id" className="text-xs">Event Ticket Number</Label>
+          <form onSubmit={handleFindAttendee} className="grid gap-3 sm:gap-4">
+            <div className="grid gap-1.5 sm:gap-2">
+              <Label htmlFor="attendee-id" className="text-sm">Event Ticket Number</Label>
               <Input
                 id="attendee-id"
                 type="text"
                 value={findAttendeeForm.data.attendee_id}
                 onChange={(e) => findAttendeeForm.setData('attendee_id', e.target.value)}
                 placeholder="Enter your attendee ID number"
-                className="h-8 text-xs"
+                className="h-9 sm:h-10 text-sm"
                 required
               />
               <p className="text-xs text-gray-500">
@@ -305,40 +305,40 @@ export default function ManageTicketDialog() {
             </div>
 
             {error && (
-              <div className="text-xs text-red-600 bg-red-50 p-1.5 rounded text-center">
+              <div className="text-xs text-red-600 bg-red-50 p-2 rounded text-center">
                 {error}
               </div>
             )}
 
-            <DialogFooter className="mt-1">
-              <Button type="button" variant="outline" size="sm" onClick={handleClose}>
+            <DialogFooter className="mt-4 flex-col sm:flex-row gap-2">
+              <Button type="button" variant="outline" onClick={handleClose} className="w-full sm:w-auto h-9 sm:h-10 text-sm">
                 Cancel
               </Button>
-              <Button type="submit" size="sm" disabled={!findAttendeeForm.data.attendee_id || isLoading}>
+              <Button type="submit" disabled={!findAttendeeForm.data.attendee_id || isLoading} className="w-full sm:w-auto h-9 sm:h-10 text-sm">
                 {isLoading ? 'Finding...' : 'Find Ticket'}
               </Button>
             </DialogFooter>
           </form>
         ) : (
           // Step 2: Display Attendee Details and Payments
-          <div className="space-y-3">
+          <div className="space-y-3 sm:space-y-4">
             {/* Attendee Information */}
             <Card className="border-0 shadow-sm">
-              <CardHeader className="pb-1 pt-2">
-                <CardTitle className="flex items-center gap-1 text-sm">
-                  <User className="size-3" />
+              <CardHeader className="pb-2 pt-3">
+                <CardTitle className="flex items-center gap-1 text-sm sm:text-base">
+                  <User className="size-3 sm:size-4" />
                   Attendee Information
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-1.5">
-                <div className="grid grid-cols-2 gap-2 text-xs">
+              <CardContent className="space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
                   <div>
                     <span className="font-medium text-gray-600">Name:</span>
-                    <p className="text-gray-900">{attendee.name}</p>
+                    <p className="text-gray-900 break-words">{attendee.name}</p>
                   </div>
                   <div>
                     <span className="font-medium text-gray-600">Email:</span>
-                    <p className="text-gray-900">{attendee.email}</p>
+                    <p className="text-gray-900 break-words">{attendee.email}</p>
                   </div>
                   <div>
                     <span className="font-medium text-gray-600">WhatsApp:</span>
@@ -366,28 +366,28 @@ export default function ManageTicketDialog() {
 
             {/* Payment Summary */}
             <Card className="border-0 shadow-sm">
-              <CardHeader className="pb-1 pt-2">
-                <CardTitle className="flex items-center gap-1 text-sm">
-                  <CreditCard className="size-3" />
+              <CardHeader className="pb-2 pt-3">
+                <CardTitle className="flex items-center gap-1 text-sm sm:text-base">
+                  <CreditCard className="size-3 sm:size-4" />
                   Payment Summary
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="grid grid-cols-3 gap-1.5 text-center">
-                  <div className="bg-green-50 p-1.5 rounded text-xs">
-                    <div className="text-base font-bold text-green-600">
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-1.5 text-center">
+                  <div className="bg-green-50 p-2 sm:p-1.5 rounded text-xs sm:text-sm">
+                    <div className="text-sm sm:text-base font-bold text-green-600">
                       Ksh. {totalConfirmedPayments.toLocaleString()}
                     </div>
                     <div className="text-xs text-green-700">Confirmed</div>
                   </div>
-                  <div className="bg-yellow-50 p-1.5 rounded text-xs">
-                    <div className="text-base font-bold text-yellow-600">
+                  <div className="bg-yellow-50 p-2 sm:p-1.5 rounded text-xs sm:text-sm">
+                    <div className="text-sm sm:text-base font-bold text-yellow-600">
                       Ksh. {totalPendingPayments.toLocaleString()}
                     </div>
                     <div className="text-xs text-yellow-700">Pending</div>
                   </div>
-                  <div className="bg-blue-50 p-1.5 rounded text-xs">
-                    <div className="text-base font-bold text-blue-600">
+                  <div className="bg-blue-50 p-2 sm:p-1.5 rounded text-xs sm:text-sm">
+                    <div className="text-sm sm:text-base font-bold text-blue-600">
                       Ksh. {remainingAmount.toLocaleString()}
                     </div>
                     <div className="text-xs text-blue-700">Remaining</div>
@@ -396,28 +396,28 @@ export default function ManageTicketDialog() {
 
                 {/* Payment Status */}
                 {totalConfirmedPayments >= 4999 ? (
-                  <div className="text-center p-2 bg-green-50 rounded text-xs">
-                    <CheckCircle className="size-4 text-green-600 mx-auto mb-1" />
-                    <p className="text-green-800 font-medium">Payment Complete!</p>
-                    <p className="text-green-600">Your ticket is fully paid and confirmed.</p>
+                  <div className="text-center p-3 bg-green-50 rounded text-sm">
+                    <CheckCircle className="size-4 sm:size-5 text-green-600 mx-auto mb-2" />
+                    <p className="text-green-800 font-medium text-sm sm:text-base">Payment Complete!</p>
+                    <p className="text-green-600 text-xs sm:text-sm">Your ticket is fully paid and confirmed.</p>
                     
                     {/* Download Ticket Button */}
                     <div className="mt-3">
                       <Button
                         onClick={handleDownloadTicket}
                         size="sm"
-                        className="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1 h-7"
+                        className="bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm px-4 py-2 h-8 sm:h-9 w-full sm:w-auto"
                       >
-                        <Download className="size-3 mr-1" />
+                        <Download className="size-3 sm:size-4 mr-1" />
                         Download Ticket PDF
                       </Button>
                     </div>
                   </div>
                 ) : (
-                  <div className="text-center p-2 bg-yellow-50 rounded text-xs">
-                    <XCircle className="size-4 text-yellow-600 mx-auto mb-1" />
-                    <p className="text-yellow-800 font-medium">Payment Incomplete</p>
-                    <p className="text-yellow-600">
+                  <div className="text-center p-3 bg-yellow-50 rounded text-sm">
+                    <XCircle className="size-4 sm:size-5 text-yellow-600 mx-auto mb-2" />
+                    <p className="text-yellow-800 font-medium text-sm sm:text-base">Payment Incomplete</p>
+                    <p className="text-yellow-600 text-xs sm:text-sm">
                       You need Ksh. {remainingAmount.toLocaleString()} more.
                     </p>
                   </div>
@@ -428,23 +428,23 @@ export default function ManageTicketDialog() {
             {/* Payment History */}
             {attendee.payments && attendee.payments.length > 0 && (
               <Card className="border-0 shadow-sm">
-                <CardHeader className="pb-1 pt-2">
-                  <CardTitle className="text-sm">Payment History</CardTitle>
+                <CardHeader className="pb-2 pt-3">
+                  <CardTitle className="text-sm sm:text-base">Payment History</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-1.5">
+                  <div className="space-y-2">
                     {attendee.payments.map((payment) => (
-                      <div key={payment.id} className="flex items-center justify-between p-1.5 bg-gray-50 rounded text-xs">
-                        <div className="flex items-center gap-1.5">
+                      <div key={payment.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 sm:p-1.5 bg-gray-50 rounded text-xs sm:text-sm">
+                        <div className="flex items-center gap-2 mb-1 sm:mb-0">
                           <Badge variant={payment.status === 'confirmed' ? 'default' : 'secondary'} className="text-xs px-1.5 py-0">
                             {payment.status === 'confirmed' ? 'Confirmed' : 'Pending'}
                           </Badge>
                           <div>
                             <p className="font-medium">Ksh. {payment.amount.toLocaleString()}</p>
-                            <p className="text-gray-600">Code: {payment.mpesa_code}</p>
+                            <p className="text-gray-600 break-all">Code: {payment.mpesa_code}</p>
                           </div>
                         </div>
-                        <div className="text-right text-gray-600">
+                        <div className="text-left sm:text-right text-gray-600 text-xs">
                           {new Date(payment.created_at).toLocaleDateString()}
                         </div>
                       </div>
@@ -457,19 +457,19 @@ export default function ManageTicketDialog() {
             {/* Add Payment Form */}
             {canAddPayment && (
               <Card className="border-0 shadow-sm">
-                <CardHeader className="pb-1 pt-2">
-                  <CardTitle className="text-sm">Add New Payment</CardTitle>
+                <CardHeader className="pb-2 pt-3">
+                  <CardTitle className="text-sm sm:text-base">Add New Payment</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handleAddPayment} className="space-y-2">
-                    <div className="grid gap-1">
-                      <Label htmlFor="mpesa-code" className="text-xs">M-Pesa Transaction Code</Label>
+                  <form onSubmit={handleAddPayment} className="space-y-3 sm:space-y-2">
+                    <div className="grid gap-1.5 sm:gap-1">
+                      <Label htmlFor="mpesa-code" className="text-sm">M-Pesa Transaction Code</Label>
                       <Input
                         id="mpesa-code"
                         value={mpesaCode}
                         onChange={handleMpesaCodeChange}
                         placeholder="Enter your M-Pesa transaction code"
-                        className={`h-7 text-xs ${mpesaCodeError && mpesaCode ? 'border-red-500' : ''}`}
+                        className={`h-9 sm:h-7 text-sm sm:text-xs ${mpesaCodeError && mpesaCode ? 'border-red-500' : ''}`}
                         required
                       />
                       <p className="text-xs text-gray-500">
@@ -480,8 +480,8 @@ export default function ManageTicketDialog() {
                       )}
                     </div>
 
-                    <div className="grid gap-1">
-                      <Label htmlFor="payment-amount" className="text-xs">Payment Amount (Ksh.)</Label>
+                    <div className="grid gap-1.5 sm:gap-1">
+                      <Label htmlFor="payment-amount" className="text-sm">Payment Amount (Ksh.)</Label>
                       <Input
                         id="payment-amount"
                         type="number"
@@ -491,7 +491,7 @@ export default function ManageTicketDialog() {
                           form.setData('amount', isNaN(value) ? 0 : value)
                         }}
                         placeholder="Enter payment amount"
-                        className="h-7 text-xs"
+                        className="h-9 sm:h-7 text-sm sm:text-xs"
                         min="0"
                         step="0.01"
                         required
@@ -501,14 +501,14 @@ export default function ManageTicketDialog() {
                       </p>
                     </div>
 
-                    <div className="flex justify-end gap-1.5">
-                      <Button type="button" variant="outline" size="sm" onClick={handleClose}>
+                    <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-1.5">
+                      <Button type="button" variant="outline" onClick={handleClose} className="w-full sm:w-auto h-9 sm:h-7 text-sm">
                         Close
                       </Button>
                       <Button 
                         type="submit" 
-                        size="sm" 
                         disabled={!validMpesaCode || !form.data.amount || form.processing}
+                        className="w-full sm:w-auto h-9 sm:h-7 text-sm"
                       >
                         {form.processing ? 'Adding...' : 'Add Payment'}
                       </Button>
@@ -521,7 +521,7 @@ export default function ManageTicketDialog() {
             {/* Close Button */}
             {!canAddPayment && (
               <div className="flex justify-end">
-                <Button size="sm" onClick={handleClose}>
+                <Button size="sm" onClick={handleClose} className="h-9 sm:h-8 text-sm w-full sm:w-auto">
                   Close
                 </Button>
               </div>
