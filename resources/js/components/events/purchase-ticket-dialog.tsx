@@ -128,24 +128,24 @@ export default function PurchaseTicketDialog({ eventId }: { eventId?: number }) 
           Register and Get Ticket
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-md sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Purchase Ticket</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-lg sm:text-xl">Purchase Ticket</DialogTitle>
+          <DialogDescription className="text-sm">
             Provide your details to reserve your spot. All fields are required.
           </DialogDescription>
         </DialogHeader>
 
-        <Alert className="mb-2 bg-green-100 text-green-800">
-          <AlertDescription className="space-x-10">
-            <p className="space-x-10">PayBill: <strong>7171186</strong></p>
-            <p className="space-x-10">Account: <strong>DINNER</strong></p>
+        <Alert className="mb-4 bg-green-100 text-green-800">
+          <AlertDescription className="text-sm">
+            <p className="mb-1">PayBill: <strong>7171186</strong></p>
+            <p>Account: <strong>DINNER</strong></p>
           </AlertDescription>
         </Alert>
 
-        <form onSubmit={handleSubmit} className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="fullName">Full name</Label>
+        <form onSubmit={handleSubmit} className="grid gap-3 sm:gap-4">
+          <div className="grid gap-1.5 sm:gap-2">
+            <Label htmlFor="fullName" className="text-sm">Full name</Label>
             <Input
               id="fullName"
               value={form.data.name}
@@ -153,17 +153,18 @@ export default function PurchaseTicketDialog({ eventId }: { eventId?: number }) 
               placeholder="Jane Doe"
               required
               aria-invalid={!!form.errors.name || undefined}
+              className="h-9 sm:h-10"
             />
             <InputError message={form.errors.name} />
           </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="gender">Gender</Label>
+          <div className="grid gap-1.5 sm:gap-2">
+            <Label htmlFor="gender" className="text-sm">Gender</Label>
             <Select
               value={form.data.gender}
               onValueChange={(v) => form.setData('gender', v)}
             >
-              <SelectTrigger id="gender" aria-invalid={!!form.errors.gender || undefined}>
+              <SelectTrigger id="gender" aria-invalid={!!form.errors.gender || undefined} className="h-9 sm:h-10">
                 <SelectValue placeholder="Select gender" />
               </SelectTrigger>
               <SelectContent>
@@ -175,8 +176,8 @@ export default function PurchaseTicketDialog({ eventId }: { eventId?: number }) 
             <InputError message={form.errors.gender} />
           </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
+          <div className="grid gap-1.5 sm:gap-2">
+            <Label htmlFor="email" className="text-sm">Email</Label>
             <Input
               id="email"
               type="email"
@@ -185,12 +186,13 @@ export default function PurchaseTicketDialog({ eventId }: { eventId?: number }) 
               placeholder="jane@example.com"
               required
               aria-invalid={!!form.errors.email || undefined}
+              className="h-9 sm:h-10"
             />
             <InputError message={form.errors.email} />
           </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="whatsapp">WhatsApp number</Label>
+          <div className="grid gap-1.5 sm:gap-2">
+            <Label htmlFor="whatsapp" className="text-sm">WhatsApp number</Label>
             <Input
               id="whatsapp"
               type="tel"
@@ -199,12 +201,13 @@ export default function PurchaseTicketDialog({ eventId }: { eventId?: number }) 
               placeholder="e.g. +254712345678"
               required
               aria-invalid={!!form.errors.whatsapp || undefined}
+              className="h-9 sm:h-10"
             />
             <InputError message={form.errors.whatsapp} />
           </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="mpesa">M-Pesa payment code</Label>
+          <div className="grid gap-1.5 sm:gap-2">
+            <Label htmlFor="mpesa" className="text-sm">M-Pesa payment code</Label>
             <Input
               id="mpesa"
               value={form.data.mpesa_code}
@@ -212,10 +215,10 @@ export default function PurchaseTicketDialog({ eventId }: { eventId?: number }) 
               placeholder="e.g. QW12AB34CD"
               required
               aria-invalid={!!form.errors.mpesa_code || !mpesaCodeValidation.isValid || undefined}
-              className={!mpesaCodeValidation.isValid && form.data.mpesa_code ? 'border-red-500' : ''}
+              className={`h-9 sm:h-10 ${!mpesaCodeValidation.isValid && form.data.mpesa_code ? 'border-red-500' : ''}`}
             />
             {!mpesaCodeValidation.isValid && form.data.mpesa_code && (
-              <p className="text-sm text-red-600">{mpesaCodeValidation.message}</p>
+              <p className="text-xs text-red-600">{mpesaCodeValidation.message}</p>
             )}
             <InputError message={form.errors.mpesa_code} />
             <p className="text-xs text-gray-500">
@@ -223,12 +226,12 @@ export default function PurchaseTicketDialog({ eventId }: { eventId?: number }) 
             </p>
           </div>
 
-          <div className="grid gap-2">
+          <div className="grid gap-1.5 sm:gap-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="amount">Amount paid (KES)</Label>
-              {isFullPayment && <Badge>Full payment</Badge>}
+              <Label htmlFor="amount" className="text-sm">Amount paid (KES)</Label>
+              {isFullPayment && <Badge className="text-xs">Full payment</Badge>}
               {!isFullPayment && isPartialPayment && (
-                <Badge variant="destructive">Partial payment</Badge>
+                <Badge variant="destructive" className="text-xs">Partial payment</Badge>
               )}
             </div>
             <Input
@@ -242,17 +245,18 @@ export default function PurchaseTicketDialog({ eventId }: { eventId?: number }) 
               placeholder="e.g. 4999"
               required
               aria-invalid={!!form.errors.amount || undefined}
+              className="h-9 sm:h-10"
             />
             <InputError message={form.errors.amount} />
           </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="member">OLQP member</Label>
+          <div className="grid gap-1.5 sm:gap-2">
+            <Label htmlFor="member" className="text-sm">OLQP member</Label>
             <Select
               value={form.data.is_olqp_member}
               onValueChange={(v) => form.setData('is_olqp_member', v)}
             >
-              <SelectTrigger id="member" aria-invalid={!!form.errors.is_olqp_member || undefined}>
+              <SelectTrigger id="member" aria-invalid={!!form.errors.is_olqp_member || undefined} className="h-9 sm:h-10">
                 <SelectValue placeholder="Are you an OLQP member?" />
               </SelectTrigger>
               <SelectContent>
@@ -267,15 +271,16 @@ export default function PurchaseTicketDialog({ eventId }: { eventId?: number }) 
             Note: You can only purchase one ticket at a time.
           </p>
 
-          <DialogFooter className="mt-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+          <DialogFooter className="mt-4 flex-col sm:flex-row gap-2">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} className="w-full sm:w-auto h-9 sm:h-10 text-sm">
               Cancel
             </Button>
             <Button 
               type="submit" 
               disabled={form.processing || !mpesaCodeValidation.isValid}
+              className="w-full sm:w-auto h-9 sm:h-10 text-sm"
             >
-              {form.processing ? 'Submitting…' : 'Continue'}
+              {form.processing ? 'Submitting…' : 'Submit'}
             </Button>
           </DialogFooter>
         </form>
