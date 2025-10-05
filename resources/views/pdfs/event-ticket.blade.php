@@ -7,7 +7,8 @@
     <style>
         @page {
             margin: 0;
-            padding: 20px;
+            padding: 10px;
+            size: A4;
         }
         
         body {
@@ -16,20 +17,34 @@
             padding: 0;
             background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
             color: #333;
+            font-size: 12px;
         }
         
         .ticket-container {
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
             overflow: hidden;
             position: relative;
+            max-height: 100vh;
+        }
+        
+        .logo-section {
+            text-align: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #d4af37;
+        }
+        
+        .logo-section img {
+            max-height: 60px;
+            width: auto;
         }
         
         .header {
             background: linear-gradient(135deg, #d4af37 0%, #f4d03f 50%, #d4af37 100%);
             color: #1a1a1a;
-            padding: 30px;
+            padding: 15px;
             text-align: center;
             position: relative;
         }
@@ -52,16 +67,16 @@
         
         .header h1 {
             margin: 0;
-            font-size: 32px;
+            font-size: 20px;
             font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
             position: relative;
             z-index: 1;
         }
         
         .header .subtitle {
-            font-size: 18px;
-            margin-top: 10px;
+            font-size: 12px;
+            margin-top: 5px;
             opacity: 0.9;
             position: relative;
             z-index: 1;
@@ -70,38 +85,38 @@
         .ticket-number {
             background: #1a1a1a;
             color: #d4af37;
-            padding: 15px;
+            padding: 8px;
             text-align: center;
-            font-size: 24px;
+            font-size: 16px;
             font-weight: bold;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
         }
         
         .content {
-            padding: 30px;
+            padding: 15px;
         }
         
         .attendee-info {
             background: #f8f9fa;
-            border-radius: 10px;
-            padding: 25px;
-            margin-bottom: 25px;
-            border-left: 5px solid #d4af37;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-left: 3px solid #d4af37;
         }
         
         .attendee-info h3 {
-            margin: 0 0 20px 0;
+            margin: 0 0 10px 0;
             color: #1a1a1a;
-            font-size: 20px;
+            font-size: 14px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 5px;
         }
         
         .info-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
         }
         
         .info-item {
@@ -112,56 +127,56 @@
         .info-label {
             font-weight: bold;
             color: #666;
-            font-size: 14px;
-            margin-bottom: 5px;
+            font-size: 10px;
+            margin-bottom: 2px;
         }
         
         .info-value {
-            font-size: 16px;
+            font-size: 11px;
             color: #1a1a1a;
             font-weight: 500;
         }
         
         .event-details {
             background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-            border-radius: 10px;
-            padding: 25px;
-            margin-bottom: 25px;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
             border: 2px solid #2196f3;
         }
         
         .event-details h3 {
-            margin: 0 0 20px 0;
+            margin: 0 0 10px 0;
             color: #1565c0;
-            font-size: 20px;
+            font-size: 14px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 5px;
         }
         
         .payment-summary {
             background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
-            border-radius: 10px;
-            padding: 25px;
-            margin-bottom: 25px;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
             border: 2px solid #4caf50;
         }
         
         .payment-summary h3 {
-            margin: 0 0 20px 0;
+            margin: 0 0 10px 0;
             color: #2e7d32;
-            font-size: 20px;
+            font-size: 14px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 5px;
         }
         
         .status-badge {
             background: #4caf50;
             color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
             font-weight: bold;
             display: inline-block;
         }
@@ -169,7 +184,7 @@
         .footer {
             background: #1a1a1a;
             color: white;
-            padding: 30px;
+            padding: 15px;
             text-align: center;
             position: relative;
         }
@@ -178,8 +193,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 30px;
-            margin-bottom: 20px;
+            gap: 15px;
+            margin-bottom: 10px;
         }
         
         .qr-code {
@@ -187,10 +202,12 @@
         }
         
         .qr-code img {
-            border: 3px solid #d4af37;
-            border-radius: 10px;
+            border: 2px solid #d4af37;
+            border-radius: 8px;
             background: white;
-            padding: 10px;
+            padding: 5px;
+            width: 80px;
+            height: 80px;
         }
         
         .qr-info {
@@ -198,22 +215,22 @@
         }
         
         .qr-info h4 {
-            margin: 0 0 15px 0;
+            margin: 0 0 8px 0;
             color: #d4af37;
-            font-size: 18px;
+            font-size: 12px;
         }
         
         .qr-info p {
-            margin: 5px 0;
-            font-size: 14px;
+            margin: 2px 0;
+            font-size: 10px;
             opacity: 0.9;
         }
         
         .terms {
-            font-size: 12px;
+            font-size: 8px;
             opacity: 0.8;
-            margin-top: 20px;
-            line-height: 1.4;
+            margin-top: 8px;
+            line-height: 1.2;
         }
         
         .watermark {
@@ -221,7 +238,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 60px;
+            font-size: 40px;
             color: rgba(212, 175, 55, 0.1);
             font-weight: bold;
             pointer-events: none;
@@ -229,7 +246,7 @@
         }
         
         .icon {
-            font-size: 20px;
+            font-size: 12px;
         }
     </style>
 </head>
@@ -237,9 +254,13 @@
     <div class="ticket-container">
         <div class="watermark">OLQP</div>
         
+        <div class="logo-section">
+            <img src="{{ public_path('images/logo.png') }}" alt="OLQP Logo">
+        </div>
+        
         <div class="header">
             <h1>🎭 OLQP SINGLES DINNER 2025</h1>
-            <div class="subtitle">Exclusive Evening of Connection & Fine Dining</div>
+            <div class="subtitle">An evening of fun, networking and great experiences</div>
         </div>
         
         <div class="ticket-number">
@@ -296,7 +317,7 @@
                     </div>
                     <div class="info-item">
                         <div class="info-label">Venue</div>
-                        <div class="info-value">The Edge, South C</div>
+                        <div class="info-value">The Boma, South C</div>
                     </div>
                 </div>
             </div>
@@ -327,8 +348,8 @@
         <div class="footer">
             <div class="qr-section">
                 <div class="qr-code">
-                    <img src="{{ $qrCodeBase64 }}" alt="QR Code" width="120" height="120">
-                    <p style="margin-top: 10px; font-size: 12px; opacity: 0.8;">Scan for verification</p>
+                    <img src="{{ $qrCodeBase64 }}" alt="QR Code" width="80" height="80">
+                    <p style="margin-top: 5px; font-size: 8px; opacity: 0.8;">Scan for verification</p>
                 </div>
                 <div class="qr-info">
                     <h4>📱 QR Code Information</h4>
@@ -341,7 +362,7 @@
             
             <div class="terms">
                 <strong>Important:</strong> This ticket is valid for one person only. Please present this ticket (digital or printed) at the event entrance. 
-                The QR code contains verification information. For any questions, contact us at 0777111000 or info@olqp.org.
+                The QR code contains verification information. For any questions, contact us at 0717186600 or olqpsouthbsecretary@gmail.com.
                 <br><br>
                 <strong>Terms:</strong> This ticket is non-transferable and non-refundable. OLQP reserves the right to refuse entry if the ticket is invalid or duplicated.
             </div>
