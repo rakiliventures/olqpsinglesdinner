@@ -259,7 +259,7 @@
         </div>
         
         <div class="header">
-            <h1>🎭 OLQP SINGLES DINNER 2025</h1>
+            <h1>OLQP SINGLES DINNER 2025</h1>
             <div class="subtitle">An evening of fun, networking and great experiences</div>
         </div>
         
@@ -269,7 +269,7 @@
         
         <div class="content">
             <div class="attendee-info">
-                <h3><span class="icon">👤</span> Attendee Information</h3>
+                <h3>Attendee Information</h3>
                 <div class="info-grid">
                     <div class="info-item">
                         <div class="info-label">Full Name</div>
@@ -301,7 +301,7 @@
             </div>
             
             <div class="event-details">
-                <h3><span class="icon">🎭</span> Event Details</h3>
+                <h3>Event Details</h3>
                 <div class="info-grid">
                     <div class="info-item">
                         <div class="info-label">Event Name</div>
@@ -323,7 +323,7 @@
             </div>
             
             <div class="payment-summary">
-                <h3><span class="icon">💰</span> Payment Summary</h3>
+                <h3> Payment Summary</h3>
                 <div class="info-grid">
                     <div class="info-item">
                         <div class="info-label">Total Amount Paid</div>
