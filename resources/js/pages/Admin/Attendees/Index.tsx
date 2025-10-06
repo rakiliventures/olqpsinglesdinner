@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useToast } from '@/components/ui/toast'
 import { Head, useForm, usePage } from '@inertiajs/react'
-import { PencilIcon, PlusIcon, Trash2Icon } from 'lucide-react'
+import { PencilIcon, PlusIcon, Trash2Icon, MailIcon, BellIcon, UsersIcon, TicketIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 type AttendeeRow = {
@@ -34,11 +34,47 @@ export default function AdminAttendeesIndex() {
   const eventAmount = props.event?.amount ?? 0
 
   const deleteForm = useForm({})
+  const resendTicketForm = useForm({})
+  const sendReminderForm = useForm({})
+  const bulkSendRemindersForm = useForm({})
+  const bulkResendTicketsForm = useForm({})
 
   function submitDelete(id: number) {
     deleteForm.delete(route('admin.attendees.destroy', id), {
       preserveScroll: true,
       onSuccess: () => toast({ title: 'Attendee deleted' }),
+    })
+  }
+
+  function resendTicket(id: number) {
+    resendTicketForm.post(route('admin.attendees.resend-ticket', id), {
+      preserveScroll: true,
+      onSuccess: () => toast({ title: 'Ticket resent successfully' }),
+      onError: () => toast({ title: 'Failed to resend ticket', variant: 'destructive' }),
+    })
+  }
+
+  function sendReminder(id: number) {
+    sendReminderForm.post(route('admin.attendees.send-reminder', id), {
+      preserveScroll: true,
+      onSuccess: () => toast({ title: 'Reminder sent successfully' }),
+      onError: () => toast({ title: 'Failed to send reminder', variant: 'destructive' }),
+    })
+  }
+
+  function bulkSendReminders() {
+    bulkSendRemindersForm.post(route('admin.attendees.bulk-send-reminders'), {
+      preserveScroll: true,
+      onSuccess: () => toast({ title: 'Bulk reminders sent successfully' }),
+      onError: () => toast({ title: 'Failed to send bulk reminders', variant: 'destructive' }),
+    })
+  }
+
+  function bulkResendTickets() {
+    bulkResendTicketsForm.post(route('admin.attendees.bulk-resend-tickets'), {
+      preserveScroll: true,
+      onSuccess: () => toast({ title: 'Bulk tickets resent successfully' }),
+      onError: () => toast({ title: 'Failed to resend bulk tickets', variant: 'destructive' }),
     })
   }
 
@@ -59,7 +95,19 @@ export default function AdminAttendeesIndex() {
               <div className="text-sm text-neutral-600 dark:text-neutral-400">Event: {props.event.name} ({props.event.date})</div>
             )}
           </div>
-          <CreateAttendeeModal />
+          <div className="flex gap-2">
+            <BulkSendRemindersButton 
+              onBulkSendReminders={bulkSendReminders}
+              processing={bulkSendRemindersForm.processing}
+              attendees={attendees}
+            />
+            <BulkResendTicketsButton 
+              onBulkResendTickets={bulkResendTickets}
+              processing={bulkResendTicketsForm.processing}
+              attendees={attendees}
+            />
+            <CreateAttendeeModal />
+          </div>
         </div>
 
         <div className="rounded-lg border border-black/10 dark:border-white/10">
@@ -100,6 +148,22 @@ export default function AdminAttendeesIndex() {
                   <TableCell><PaymentBadge total={a.total_amount} /></TableCell>
                   <TableCell className="flex gap-2">
                     <EditAttendeeModal attendee={a} />
+                    {a.total_amount >= 4999 && (
+                      <ResendTicketButton 
+                        attendeeId={a.id} 
+                        attendeeName={a.name}
+                        onResend={resendTicket}
+                        processing={resendTicketForm.processing}
+                      />
+                    )}
+                    {a.total_amount < 4999 && (
+                      <SendReminderButton 
+                        attendeeId={a.id} 
+                        attendeeName={a.name}
+                        onSendReminder={sendReminder}
+                        processing={sendReminderForm.processing}
+                      />
+                    )}
                     <Button variant="destructive" onClick={() => submitDelete(a.id)}>
                       <Trash2Icon />
                     </Button>
@@ -263,6 +327,208 @@ function EditAttendeeModal({ attendee }: { attendee: AttendeeRow }) {
             <Button type="submit" disabled={form.processing}>{form.processing ? 'Saving…' : 'Save'}</Button>
           </DialogFooter>
         </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function ResendTicketButton({ 
+  attendeeId, 
+  attendeeName, 
+  onResend, 
+  processing 
+}: { 
+  attendeeId: number
+  attendeeName: string
+  onResend: (id: number) => void
+  processing: boolean
+}) {
+  const [open, setOpen] = useState(false)
+
+  function handleResend() {
+    onResend(attendeeId)
+    setOpen(false)
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <MailIcon className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Resend Event Ticket</DialogTitle>
+        </DialogHeader>
+        <div className="py-4">
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            Are you sure you want to resend the event ticket to <strong>{attendeeName}</strong>?
+          </p>
+          <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-2">
+            This will send a new email with the event ticket PDF attached.
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleResend} disabled={processing}>
+            {processing ? 'Sending...' : 'Resend Ticket'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function SendReminderButton({ 
+  attendeeId, 
+  attendeeName, 
+  onSendReminder, 
+  processing 
+}: { 
+  attendeeId: number
+  attendeeName: string
+  onSendReminder: (id: number) => void
+  processing: boolean
+}) {
+  const [open, setOpen] = useState(false)
+
+  function handleSendReminder() {
+    onSendReminder(attendeeId)
+    setOpen(false)
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <BellIcon className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Send Payment Reminder</DialogTitle>
+        </DialogHeader>
+        <div className="py-4">
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            Are you sure you want to send a payment reminder to <strong>{attendeeName}</strong>?
+          </p>
+          <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-2">
+            This will send an email with payment status, remaining balance, and event details.
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSendReminder} disabled={processing}>
+            {processing ? 'Sending...' : 'Send Reminder'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function BulkSendRemindersButton({ 
+  onBulkSendReminders, 
+  processing, 
+  attendees 
+}: { 
+  onBulkSendReminders: () => void
+  processing: boolean
+  attendees: AttendeeRow[]
+}) {
+  const [open, setOpen] = useState(false)
+  
+  const partiallyPaidCount = attendees.filter(a => a.total_amount < 4999).length
+
+  function handleBulkSendReminders() {
+    onBulkSendReminders()
+    setOpen(false)
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" disabled={partiallyPaidCount === 0}>
+          <UsersIcon className="h-4 w-4 mr-2" />
+          Send Reminders ({partiallyPaidCount})
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Send Bulk Payment Reminders</DialogTitle>
+        </DialogHeader>
+        <div className="py-4">
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            Are you sure you want to send payment reminders to <strong>{partiallyPaidCount} partially paid attendees</strong>?
+          </p>
+          <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-2">
+            This will send personalized reminder emails with payment status and remaining balance to all attendees who have not fully paid.
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleBulkSendReminders} disabled={processing}>
+            {processing ? 'Sending...' : `Send to ${partiallyPaidCount} Attendees`}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function BulkResendTicketsButton({ 
+  onBulkResendTickets, 
+  processing, 
+  attendees 
+}: { 
+  onBulkResendTickets: () => void
+  processing: boolean
+  attendees: AttendeeRow[]
+}) {
+  const [open, setOpen] = useState(false)
+  
+  const fullyPaidCount = attendees.filter(a => a.total_amount >= 4999).length
+
+  function handleBulkResendTickets() {
+    onBulkResendTickets()
+    setOpen(false)
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" disabled={fullyPaidCount === 0}>
+          <TicketIcon className="h-4 w-4 mr-2" />
+          Resend Tickets ({fullyPaidCount})
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Resend Bulk Event Tickets</DialogTitle>
+        </DialogHeader>
+        <div className="py-4">
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            Are you sure you want to resend event tickets to <strong>{fullyPaidCount} fully paid attendees</strong>?
+          </p>
+          <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-2">
+            This will send event tickets with QR codes to all attendees who have fully paid (Ksh. 4,999 and above).
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleBulkResendTickets} disabled={processing}>
+            {processing ? 'Sending...' : `Resend to ${fullyPaidCount} Attendees`}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

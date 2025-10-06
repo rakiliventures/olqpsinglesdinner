@@ -21,6 +21,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('attendees', [AttendeesController::class, 'store'])->name('admin.attendees.store');
     Route::put('attendees/{attendee}', [AttendeesController::class, 'update'])->name('admin.attendees.update');
     Route::delete('attendees/{attendee}', [AttendeesController::class, 'destroy'])->name('admin.attendees.destroy');
+    Route::post('attendees/{attendee}/resend-ticket', [AttendeesController::class, 'resendTicket'])->name('admin.attendees.resend-ticket');
+    Route::post('attendees/{attendee}/send-reminder', [AttendeesController::class, 'sendReminder'])->name('admin.attendees.send-reminder');
+    Route::post('attendees/bulk-send-reminders', [AttendeesController::class, 'bulkSendReminders'])->name('admin.attendees.bulk-send-reminders');
+    Route::post('attendees/bulk-resend-tickets', [AttendeesController::class, 'bulkResendTickets'])->name('admin.attendees.bulk-resend-tickets');
 
     Route::get('payments', [PaymentsController::class, 'index'])->name('admin.payments.index');
     Route::post('payments', [PaymentsController::class, 'store'])->name('admin.payments.store');
