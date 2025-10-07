@@ -87,7 +87,7 @@ export default function SinglesEvent() {
                       
                       <div className="text-center px-2">
                         <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white tracking-wider drop-shadow-2xl leading-tight">
-                          MASQUERADE SINGLES <span className="text-yellow-500 font-serif italic">DINNER</span>
+                          MASQUERADE <span className="text-yellow-500 font-serif italic">SINGLES DINNER</span>
                         </h1>
                       </div>
                     </div>
