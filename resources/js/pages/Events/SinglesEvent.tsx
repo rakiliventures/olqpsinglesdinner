@@ -12,7 +12,7 @@ export default function SinglesEvent() {
       <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-gray-800 relative overflow-hidden">
         {/* Masquerade Background Elements */}
         <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-[url('/images/bg5.png')] bg-cover bg-center sm:bg-center"></div>
+          <div className="absolute inset-0 bg-[url('/images/mobile_bg1.png')] sm:bg-[url('/images/bg7.png')] bg-cover bg-center"></div>
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-gray-900/60 to-gray-800/40"></div>
           
           {/* Masquerade Floating Elements */}
@@ -37,19 +37,19 @@ export default function SinglesEvent() {
               <div className="flex items-center justify-between">
                 <div className="text-white">
                   <div className="flex items-center gap-3">
-                    <div className="bg-gray-100 backdrop-blur-sm rounded-full px-4 py-3 border-2 border-gray-300 shadow-lg">
+                    <div className="bg-gray-100 backdrop-blur-sm rounded-full px-2 sm:px-4 py-1.5 sm:py-3 border-2 border-gray-300 shadow-lg">
                       <img 
                         src="/images/logo.png" 
                         alt="OLQP Parish Logo" 
-                        className="h-8 sm:h-10 w-auto object-contain"
+                        className="h-6 sm:h-8 md:h-10 w-auto object-contain"
                       />
                     </div>
                   </div>
                 </div>
                 
                 {/* Masquerade Countdown Timer */}
-                <div className="flex items-center gap-4">
-                  <div className="bg-gradient-to-r from-yellow-500/20 to-amber-500/20 backdrop-blur-lg rounded-full px-5 py-3 border border-yellow-500/60 shadow-xl hover:shadow-2xl transition-all duration-300">
+                <div className="flex items-center gap-2 sm:gap-4">
+                  <div className="bg-gradient-to-r from-yellow-500/20 to-amber-500/20 backdrop-blur-lg rounded-full px-3 sm:px-5 py-2 sm:py-3 border border-yellow-500/60 shadow-xl hover:shadow-2xl transition-all duration-300">
                     <CountdownTimer targetDate="2025-10-31T18:00:00" />
                   </div>
                   <div className="text-center">
@@ -74,7 +74,7 @@ export default function SinglesEvent() {
                   <div className="space-y-4 sm:space-y-6">
                     {/* Parish Welcome - Paragraph Style */}
                     <div className="text-center mb-4 sm:mb-6">
-                      <p className="text-xs sm:text-sm md:text-base text-white font-medium mb-1 sm:mb-2 px-2">
+                      <p className="text-xs sm:text-sm md:text-base text-gray-300 font-medium mb-1 sm:mb-2 px-2">
                         Our Lady Queen of Peace Catholic Parish, South B
                       </p>
                       <p className="text-xs sm:text-sm text-yellow-400 font-serif italic px-2">
@@ -154,7 +154,7 @@ export default function SinglesEvent() {
                       <div className="flex items-center justify-center gap-1 sm:gap-2 mb-1 sm:mb-2">
                         <CrownIcon className="size-2.5 sm:size-3 text-yellow-500" />
                         <p className="text-yellow-400 text-xs font-bold uppercase tracking-widest group-hover:text-yellow-300 transition-colors duration-300">
-                          Complete Your Invitation
+                          PAID SUBSEQUENT INSTALLMENT
                         </p>
                       </div>
                       <div className="transform group-hover:scale-105 transition-transform duration-300">
