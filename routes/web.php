@@ -30,6 +30,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('payments', [PaymentsController::class, 'store'])->name('admin.payments.store');
     Route::put('payments/{payment}', [PaymentsController::class, 'update'])->name('admin.payments.update');
     Route::delete('payments/{payment}', [PaymentsController::class, 'destroy'])->name('admin.payments.destroy');
+    Route::get('payments/export/pdf', [PaymentsController::class, 'exportPdf'])->name('admin.payments.export.pdf');
+    Route::get('payments/export/excel', [PaymentsController::class, 'exportExcel'])->name('admin.payments.export.excel');
 
     // User Management Routes
     Route::get('users', [\App\Http\Controllers\Admin\UsersController::class, 'index'])->name('admin.users.index');

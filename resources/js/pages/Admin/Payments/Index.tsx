@@ -4,11 +4,13 @@ import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useToast } from '@/components/ui/toast'
 import { Head, usePage, router } from '@inertiajs/react'
-import { CheckCircle, AlertCircle, Mail, MessageCircle, User } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { CheckCircle, AlertCircle, Mail, MessageCircle, User, Trash2, CreditCard, TrendingUp, XCircle, Clock, Search, Download, FileText, Table as TableIcon } from 'lucide-react'
 
  type PaymentRow = {
   id: number
   attendee_name?: string | null
+  attendee_phone?: string | null
   event_name?: string | null
   amount: number
   mpesa_code: string
@@ -28,6 +30,34 @@ export default function AdminPaymentsIndex() {
   const { toast } = useToast()
   const { props } = usePage<PageProps>()
   const payments = props.payments || []
+
+  // Search and filter state
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+
+  // Filtered payments based on search and status filter
+  const filteredPayments = useMemo(() => {
+    return payments.filter(payment => {
+      // Search filter
+      const matchesSearch = searchTerm === '' || 
+        payment.attendee_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        payment.attendee_phone?.includes(searchTerm) ||
+        payment.mpesa_code.toLowerCase().includes(searchTerm.toLowerCase())
+
+      // Status filter
+      const matchesStatus = statusFilter === 'all' || payment.status === statusFilter
+
+      return matchesSearch && matchesStatus
+    })
+  }, [payments, searchTerm, statusFilter])
+
+  // Calculate payment summary based on filtered results
+  const paymentSummary = {
+    total: filteredPayments.length,
+    confirmed: filteredPayments.filter(p => p.status === 'confirmed').length,
+    failed: filteredPayments.filter(p => p.status === 'failed').length,
+    pending: filteredPayments.filter(p => p.status === 'pending').length,
+  }
 
   function updateStatus(id: number, status: PaymentRow['status']) {
     router.put(route('admin.payments.update', id), { status }, {
@@ -51,6 +81,72 @@ export default function AdminPaymentsIndex() {
         toast({ 
           title: 'Error', 
           description: 'Failed to update payment status. Please try again.',
+          variant: 'destructive',
+        })
+      }
+    })
+  }
+
+  function deletePayment(id: number) {
+    if (confirm('Are you sure you want to delete this payment? This action cannot be undone.')) {
+      router.delete(route('admin.payments.destroy', id), {
+        preserveScroll: true,
+        onSuccess: () => {
+          toast({ 
+            title: 'Payment Deleted', 
+            description: 'The payment has been successfully deleted.',
+            variant: 'default',
+          })
+        },
+        onError: () => {
+          toast({ 
+            title: 'Error', 
+            description: 'Failed to delete payment. Please try again.',
+            variant: 'destructive',
+          })
+        }
+      })
+    }
+  }
+
+  function exportToPDF() {
+    router.get(route('admin.payments.export.pdf'), {
+      search: searchTerm,
+      status: statusFilter
+    }, {
+      onSuccess: () => {
+        toast({ 
+          title: 'PDF Export Started', 
+          description: 'Your PDF export will download shortly.',
+          variant: 'default',
+        })
+      },
+      onError: () => {
+        toast({ 
+          title: 'Export Error', 
+          description: 'Failed to export PDF. Please try again.',
+          variant: 'destructive',
+        })
+      }
+    })
+  }
+
+  function exportToExcel() {
+    router.get(route('admin.payments.export.excel'), {
+      search: searchTerm,
+      status: statusFilter
+    }, {
+      onSuccess: () => {
+        toast({ 
+          title: 'CSV Export Started', 
+          description: 'Your CSV export will download shortly.',
+          variant: 'default',
+        })
+      },
+      onError: () => {
+        toast({ 
+          title: 'Export Error', 
+          description: 'Failed to export CSV. Please try again.',
           variant: 'destructive',
         })
       }
@@ -94,6 +190,129 @@ export default function AdminPaymentsIndex() {
           </div>
         </div>
 
+        {/* Payment Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <CreditCard className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Payments</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{paymentSummary.total}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <TrendingUp className="h-8 w-8 text-green-600 dark:text-green-400" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Confirmed</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{paymentSummary.confirmed}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <XCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Failed</p>
+                <p className="text-2xl font-bold text-red-600 dark:text-red-400">{paymentSummary.failed}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <Clock className="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Pending Action</p>
+                <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{paymentSummary.pending}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Search and Filter Controls */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 mb-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+            <div className="flex flex-col sm:flex-row gap-3 flex-1">
+              {/* Search Bar */}
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search by name, phone, or M-Pesa code..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* Status Filter */}
+              <div className="flex-shrink-0">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="px-2.5 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="pending">Pending</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="failed">Failed</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Export Buttons */}
+            <div className="flex gap-1.5">
+              <Button
+                onClick={exportToPDF}
+                size="sm"
+                variant="outline"
+                className="flex items-center gap-1.5 border-blue-300 text-blue-700 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-950/30"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Export PDF</span>
+                <span className="sm:hidden">PDF</span>
+              </Button>
+              <Button
+                onClick={exportToExcel}
+                size="sm"
+                variant="outline"
+                className="flex items-center gap-1.5 border-green-300 text-green-700 hover:bg-green-50 dark:border-green-700 dark:text-green-300 dark:hover:bg-green-950/30"
+              >
+                <TableIcon className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Export CSV</span>
+                <span className="sm:hidden">CSV</span>
+              </Button>
+            </div>
+          </div>
+
+          {/* Results Count */}
+          <div className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+            Showing {filteredPayments.length} of {payments.length} payments
+            {searchTerm && (
+              <span className="ml-2">
+                • Search: "{searchTerm}"
+              </span>
+            )}
+            {statusFilter !== 'all' && (
+              <span className="ml-2">
+                • Status: {statusFilter}
+              </span>
+            )}
+          </div>
+        </div>
+
         <div className="rounded-lg border border-black/10 dark:border-white/10 bg-white dark:bg-gray-900 shadow-sm">
           <Table>
             <TableHeader>
@@ -109,19 +328,33 @@ export default function AdminPaymentsIndex() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {payments.length === 0 && (
+              {filteredPayments.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-8 text-gray-500 dark:text-gray-400">
                     <div className="flex flex-col items-center gap-2">
                       <AlertCircle className="h-8 w-8 text-gray-300" />
-                      <span>No payments found.</span>
+                      <span>
+                        {payments.length === 0 
+                          ? 'No payments found.' 
+                          : 'No payments match your search criteria.'
+                        }
+                      </span>
                     </div>
                   </TableCell>
                 </TableRow>
               )}
-              {payments.map((p) => (
+              {filteredPayments.map((p) => (
                 <TableRow key={p.id} className={p.status === 'pending' ? 'bg-yellow-50 dark:bg-yellow-950/20' : ''}>
-                  <TableCell className="font-medium">{p.attendee_name ?? '-'}</TableCell>
+                  <TableCell className="font-medium">
+                    <div>
+                      <div className="font-medium">{p.attendee_name ?? '-'}</div>
+                      {p.attendee_phone && (
+                        <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          {p.attendee_phone}
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell className="font-semibold text-green-600 dark:text-green-400">
                     Ksh. {p.amount.toLocaleString()}
                   </TableCell>
@@ -191,6 +424,14 @@ export default function AdminPaymentsIndex() {
                           </div>
                         </div>
                       )}
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => deletePayment(p.id)}
+                        className="border-red-300 text-red-700 hover:bg-red-50 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-950/30 ml-2"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
