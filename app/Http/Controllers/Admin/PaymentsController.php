@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PaymentsController extends Controller
 {
@@ -44,6 +45,7 @@ class PaymentsController extends Controller
             return [
                 'id' => $p->id,
                 'attendee_name' => $p->attendee?->name,
+                'attendee_phone' => $p->attendee?->whatsapp,
                 'event_name' => $p->attendee?->event?->name,
                 'amount' => (float) $p->amount,
                 'mpesa_code' => $p->mpesa_code,
@@ -90,6 +92,20 @@ class PaymentsController extends Controller
         }
 
         return back()->with('success', 'Payment updated successfully.');
+    }
+
+    public function destroy(Payment $payment): RedirectResponse
+    {
+        try {
+            $payment->delete();
+            return back()->with('success', 'Payment deleted successfully.');
+        } catch (\Exception $e) {
+            Log::error('Failed to delete payment', [
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage()
+            ]);
+            return back()->with('error', 'Failed to delete payment. Please try again.');
+        }
     }
 
     protected function sendPaymentConfirmationNotifications(Payment $payment): void
@@ -185,5 +201,116 @@ class PaymentsController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
         }
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $search = $request->get('search', '');
+        $status = $request->get('status', 'all');
+
+        $query = Payment::query()
+            ->with(['attendee:id,name,event_id,email,whatsapp', 'attendee.event:id,name', 'actionedBy:id,name'])
+            ->orderByDesc('created_at');
+
+        // Apply search filter
+        if ($search) {
+            $query->whereHas('attendee', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('whatsapp', 'like', "%{$search}%");
+            })->orWhere('mpesa_code', 'like', "%{$search}%");
+        }
+
+        // Apply status filter
+        if ($status !== 'all') {
+            $query->where('status', $status);
+        }
+
+        $payments = $query->get();
+
+        $data = [
+            'payments' => $payments,
+            'search' => $search,
+            'status' => $status,
+            'exported_at' => now()->format('Y-m-d H:i:s'),
+        ];
+
+        $pdf = Pdf::loadView('pdfs.payments-export', $data);
+        return $pdf->download('payments-export-' . now()->format('Y-m-d-H-i-s') . '.pdf');
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $search = $request->get('search', '');
+        $status = $request->get('status', 'all');
+
+        $query = Payment::query()
+            ->with(['attendee:id,name,event_id,email,whatsapp', 'attendee.event:id,name', 'actionedBy:id,name'])
+            ->orderByDesc('created_at');
+
+        // Apply search filter
+        if ($search) {
+            $query->whereHas('attendee', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('whatsapp', 'like', "%{$search}%");
+            })->orWhere('mpesa_code', 'like', "%{$search}%");
+        }
+
+        // Apply status filter
+        if ($status !== 'all') {
+            $query->where('status', $status);
+        }
+
+        $payments = $query->get();
+
+        $data = $payments->map(function (Payment $p) {
+            return [
+                'ID' => $p->id,
+                'Attendee Name' => $p->attendee?->name ?? '-',
+                'Phone Number' => $p->attendee?->whatsapp ?? '-',
+                'Event' => $p->attendee?->event?->name ?? '-',
+                'Amount' => $p->amount,
+                'M-Pesa Code' => $p->mpesa_code,
+                'Status' => ucfirst($p->status),
+                'Method' => ucfirst($p->method),
+                'Created At' => $p->created_at?->format('Y-m-d H:i:s'),
+                'Actioned By' => $p->actionedBy?->name ?? '-',
+                'Actioned At' => $p->actioned_at?->format('Y-m-d H:i:s'),
+            ];
+        });
+
+        // Generate CSV content
+        $csvContent = $this->generateCsvContent($data);
+        
+        return response($csvContent)
+            ->header('Content-Type', 'text/csv')
+            ->header('Content-Disposition', 'attachment; filename="payments-export-' . now()->format('Y-m-d-H-i-s') . '.csv"');
+    }
+
+    private function generateCsvContent($data)
+    {
+        if (empty($data)) {
+            return "No data available\n";
+        }
+
+        // Get headers from the first row
+        $headers = array_keys($data[0]);
+        
+        // Start output buffering
+        $output = fopen('php://temp', 'r+');
+        
+        // Write headers
+        fputcsv($output, $headers);
+        
+        // Write data rows
+        foreach ($data as $row) {
+            fputcsv($output, array_values($row));
+        }
+        
+        // Get the content
+        rewind($output);
+        $csvContent = stream_get_contents($output);
+        fclose($output);
+        
+        return $csvContent;
     }
 }
