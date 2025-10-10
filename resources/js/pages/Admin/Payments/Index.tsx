@@ -57,6 +57,9 @@ export default function AdminPaymentsIndex() {
     confirmed: filteredPayments.filter(p => p.status === 'confirmed').length,
     failed: filteredPayments.filter(p => p.status === 'failed').length,
     pending: filteredPayments.filter(p => p.status === 'pending').length,
+    totalConfirmedAmount: filteredPayments
+      .filter(p => p.status === 'confirmed')
+      .reduce((sum, p) => sum + p.amount, 0),
   }
 
   function updateStatus(id: number, status: PaymentRow['status']) {
@@ -191,7 +194,7 @@ export default function AdminPaymentsIndex() {
         </div>
 
         {/* Payment Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -236,6 +239,20 @@ export default function AdminPaymentsIndex() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Pending Action</p>
                 <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{paymentSummary.pending}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <TrendingUp className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Confirmed</p>
+                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                  Ksh. {paymentSummary.totalConfirmedAmount.toLocaleString()}
+                </p>
               </div>
             </div>
           </div>
