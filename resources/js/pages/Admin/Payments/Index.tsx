@@ -113,46 +113,40 @@ export default function AdminPaymentsIndex() {
   }
 
   function exportToPDF() {
-    router.get(route('admin.payments.export.pdf'), {
-      search: searchTerm,
-      status: statusFilter
-    }, {
-      onSuccess: () => {
-        toast({ 
-          title: 'PDF Export Started', 
-          description: 'Your PDF export will download shortly.',
-          variant: 'default',
-        })
-      },
-      onError: () => {
-        toast({ 
-          title: 'Export Error', 
-          description: 'Failed to export PDF. Please try again.',
-          variant: 'destructive',
-        })
-      }
+    // Build query parameters
+    const params = new URLSearchParams()
+    if (searchTerm) params.append('search', searchTerm)
+    if (statusFilter !== 'all') params.append('status', statusFilter)
+    
+    // Create direct download link
+    const url = route('admin.payments.export.pdf') + (params.toString() ? '?' + params.toString() : '')
+    
+    // Open in new window to trigger download
+    window.open(url, '_blank')
+    
+    toast({ 
+      title: 'PDF Export Started', 
+      description: 'Your PDF export will download shortly.',
+      variant: 'default',
     })
   }
 
   function exportToExcel() {
-    router.get(route('admin.payments.export.excel'), {
-      search: searchTerm,
-      status: statusFilter
-    }, {
-      onSuccess: () => {
-        toast({ 
-          title: 'CSV Export Started', 
-          description: 'Your CSV export will download shortly.',
-          variant: 'default',
-        })
-      },
-      onError: () => {
-        toast({ 
-          title: 'Export Error', 
-          description: 'Failed to export CSV. Please try again.',
-          variant: 'destructive',
-        })
-      }
+    // Build query parameters
+    const params = new URLSearchParams()
+    if (searchTerm) params.append('search', searchTerm)
+    if (statusFilter !== 'all') params.append('status', statusFilter)
+    
+    // Create direct download link
+    const url = route('admin.payments.export.excel') + (params.toString() ? '?' + params.toString() : '')
+    
+    // Open in new window to trigger download
+    window.open(url, '_blank')
+    
+    toast({ 
+      title: 'CSV Export Started', 
+      description: 'Your CSV export will download shortly.',
+      variant: 'default',
     })
   }
 

@@ -106,7 +106,7 @@ export default function Dashboard({ stats, charts }: DashboardProps) {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{stats.fullyPaidAttendees}</div>
-                            <p className="text-xs text-muted-foreground">Payments ≥ ₦4,999</p>
+                            <p className="text-xs text-muted-foreground">Payments ≥ Ksh.4,999</p>
                         </CardContent>
                     </Card>
 
@@ -117,7 +117,7 @@ export default function Dashboard({ stats, charts }: DashboardProps) {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{stats.partiallyPaidAttendees}</div>
-                            <p className="text-xs text-muted-foreground">Payments &lt; ₦4,999</p>
+                            <p className="text-xs text-muted-foreground">Payments &lt; Ksh.4,999</p>
                         </CardContent>
                     </Card>
                 </div>
