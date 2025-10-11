@@ -13,7 +13,7 @@ export default function SinglesEvent() {
       <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-gray-800 relative overflow-hidden">
         {/* Masquerade Background Elements */}
         <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-[url('/images/mobile_bg1.png')] sm:bg-[url('/images/bg7.png')] bg-cover bg-center"></div>
+          <div className="absolute inset-0 bg-[url('/images/mobile_bg1.png')] sm:bg-[url('/images/bg7.png')] bg-cover bg-center bg-fixed"></div>
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-gray-900/60 to-gray-800/40"></div>
           
           {/* Masquerade Floating Elements */}
@@ -111,30 +111,56 @@ export default function SinglesEvent() {
                 </div>
 
                 {/* Masquerade Pricing & Payment Card */}
-                <div className="bg-gradient-to-br from-black/60 via-gray-900/50 to-gray-800/40 backdrop-blur-lg rounded-xl p-3 sm:p-4 md:p-6 border border-yellow-500/40 shadow-2xl mx-2 sm:mx-0">
+                <div className="bg-gradient-to-br from-black/40 via-gray-900/30 to-gray-800/25 backdrop-blur-lg rounded-xl p-3 sm:p-4 md:p-6 border border-yellow-500/40 shadow-2xl mx-2 sm:mx-0">
                   <div className="text-center mb-3 sm:mb-4">
                     <div className="flex items-center justify-center gap-1 sm:gap-2 mb-2">
                       <GemIcon className="size-3 sm:size-4 text-yellow-500 animate-pulse" />
                       <h3 className="text-white font-bold text-sm sm:text-base md:text-lg tracking-wide">Your Invitation to the Masquerade</h3>
                       <GemIcon className="size-3 sm:size-4 text-yellow-500 animate-pulse" />
                     </div>
-                    <div className="text-center mb-3">
-                      <div className="text-xl sm:text-2xl md:text-3xl font-black text-yellow-500 mb-1">Ksh. 4,999</div>
-                      <div className="text-yellow-400 text-xs sm:text-sm md:text-base font-semibold">Exclusive Entry Fee</div>
-                      <p className="text-yellow-300/80 text-xs mt-1 italic px-2">
-                        Secure your place with as low as Ksh. 1,000 and complete your payment later
-                      </p>
+                    
+                    {/* Pricing Options - Side by Side */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-3">
+                      {/* Individual Ticket */}
+                      <div className="bg-gradient-to-br from-yellow-500/20 to-amber-500/20 backdrop-blur-sm rounded-lg p-3 sm:p-4 border border-yellow-500/50 hover:border-yellow-400/70 transition-all duration-300">
+                        <div className="text-center">
+                          <div className="flex items-center justify-center gap-1 sm:gap-2 mb-2">
+                            <UserCheckIcon className="size-3 sm:size-4 text-yellow-500" />
+                            <h4 className="text-yellow-400 text-xs sm:text-sm font-bold uppercase tracking-widest">Individual Ticket</h4>
+                          </div>
+                          <div className="text-lg sm:text-xl md:text-2xl font-black text-yellow-500 mb-1">Ksh. 4,999</div>
+                          <div className="text-yellow-300/90 text-xs sm:text-sm font-semibold">Per Person</div>
+                          <p className="text-yellow-300/70 text-xs mt-1 italic">
+                            Secure with Ksh. 1,000 minimum, and pay balance later.
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {/* Group Ticket */}
+                      <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 backdrop-blur-sm rounded-lg p-3 sm:p-4 border border-green-500/50 hover:border-green-400/70 transition-all duration-300">
+                        <div className="text-center">
+                          <div className="flex items-center justify-center gap-1 sm:gap-2 mb-2">
+                            <UsersIcon className="size-3 sm:size-4 text-green-500" />
+                            <h4 className="text-green-400 text-xs sm:text-sm font-bold uppercase tracking-widest">Group of 5</h4>
+                          </div>
+                          <div className="text-lg sm:text-xl md:text-2xl font-black text-green-500 mb-1">Ksh. 22,500</div>
+                          <div className="text-green-300/90 text-xs sm:text-sm font-semibold">Ksh. 4,500 per person</div>
+                          <p className="text-green-300/70 text-xs mt-1 italic">
+                            Must be paid in full
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-4">
-                    <div className="p-2 sm:p-3 bg-gradient-to-r from-yellow-500/15 to-amber-500/15 rounded-lg border border-yellow-500/50 hover:border-yellow-400/70 transition-all duration-300">
-                      <div className="text-yellow-400 font-bold mb-1 text-xs tracking-wide">M-Pesa Paybill</div>
-                      <div className="text-sm sm:text-lg md:text-xl font-black text-white">7171186</div>
+                  <div className="grid grid-cols-2 gap-2 mb-3">
+                    <div className="p-2 bg-gradient-to-r from-yellow-500/10 to-amber-500/10 rounded-lg border border-yellow-500/30 hover:border-yellow-400/50 transition-all duration-300 opacity-75">
+                      <div className="text-yellow-400/70 font-bold mb-1 text-xs tracking-wide">M-Pesa Paybill</div>
+                      <div className="text-sm sm:text-base font-black text-white/80">7171186</div>
                     </div>
-                    <div className="p-2 sm:p-3 bg-gradient-to-r from-yellow-500/15 to-amber-500/15 rounded-lg border border-yellow-500/50 hover:border-yellow-400/70 transition-all duration-300">
-                      <div className="text-yellow-400 font-bold mb-1 text-xs tracking-wide">Account</div>
-                      <div className="text-sm sm:text-lg md:text-xl font-black text-white">DINNER</div>
+                    <div className="p-2 bg-gradient-to-r from-yellow-500/10 to-amber-500/10 rounded-lg border border-yellow-500/30 hover:border-yellow-400/50 transition-all duration-300 opacity-75">
+                      <div className="text-yellow-400/70 font-bold mb-1 text-xs tracking-wide">Account</div>
+                      <div className="text-sm sm:text-base font-black text-white/80">DINNER</div>
                     </div>
                   </div>
 
@@ -144,7 +170,7 @@ export default function SinglesEvent() {
                       <div className="flex items-center justify-center gap-1 sm:gap-2 mb-1 sm:mb-2">
                         <UserCheckIcon className="size-2.5 sm:size-3 text-yellow-500" />
                         <p className="text-yellow-400 text-xs font-bold uppercase tracking-widest group-hover:text-yellow-300 transition-colors duration-300">
-                          New Masquerade Entry
+                          PAID FOR A NEW TICKET ?
                         </p>
                       </div>
                       <div className="transform group-hover:scale-105 transition-transform duration-300">
@@ -155,7 +181,7 @@ export default function SinglesEvent() {
                       <div className="flex items-center justify-center gap-1 sm:gap-2 mb-1 sm:mb-2">
                         <CrownIcon className="size-2.5 sm:size-3 text-yellow-500" />
                         <p className="text-yellow-400 text-xs font-bold uppercase tracking-widest group-hover:text-yellow-300 transition-colors duration-300">
-                          PAID SUBSEQUENT INSTALLMENT
+                          PAID SUBSEQUENT INSTALLMENT?
                         </p>
                       </div>
                       <div className="transform group-hover:scale-105 transition-transform duration-300">
