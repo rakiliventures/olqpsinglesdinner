@@ -25,6 +25,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('attendees/{attendee}/send-reminder', [AttendeesController::class, 'sendReminder'])->name('admin.attendees.send-reminder');
     Route::post('attendees/bulk-send-reminders', [AttendeesController::class, 'bulkSendReminders'])->name('admin.attendees.bulk-send-reminders');
     Route::post('attendees/bulk-resend-tickets', [AttendeesController::class, 'bulkResendTickets'])->name('admin.attendees.bulk-resend-tickets');
+    Route::get('attendees/export-pdf', [AttendeesController::class, 'exportPdf'])->name('admin.attendees.export-pdf');
+    Route::get('attendees/export-excel', [AttendeesController::class, 'exportExcel'])->name('admin.attendees.export-excel');
 
     Route::get('payments', [PaymentsController::class, 'index'])->name('admin.payments.index');
     Route::post('payments', [PaymentsController::class, 'store'])->name('admin.payments.store');
@@ -47,6 +49,9 @@ Route::get('/', [EventsController::class, 'singlesEvent'])
 Route::post('/singles-event/purchase-ticket', [EventsController::class, 'purchaseTicket'])
     ->name('singles-event.purchase-ticket');
 
+Route::post('/singles-event/purchase-group-ticket', [EventsController::class, 'purchaseGroupTicket'])
+    ->name('singles-event.purchase-group-ticket');
+
 Route::get('/singles-event/find-attendee', [EventsController::class, 'findAttendee'])
     ->name('singles-event.find-attendee');
 
@@ -56,6 +61,10 @@ Route::post('/singles-event/add-payment', [EventsController::class, 'addPayment'
 
 Route::get('/singles-event/download-ticket/{attendee}', [EventsController::class, 'downloadTicket'])
     ->name('singles-event.download-ticket');
+
+Route::post('/singles-event/check-mpesa-code', [EventsController::class, 'checkMpesaCode'])
+    ->name('singles-event.check-mpesa-code')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

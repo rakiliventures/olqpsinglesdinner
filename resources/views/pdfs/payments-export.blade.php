@@ -103,7 +103,6 @@
                 <th>ID</th>
                 <th>Attendee Name</th>
                 <th>Phone</th>
-                <th>Event</th>
                 <th>Amount</th>
                 <th>M-Pesa Code</th>
                 <th>Status</th>
@@ -117,9 +116,13 @@
             @forelse($payments as $payment)
                 <tr>
                     <td>{{ $payment->id }}</td>
-                    <td>{{ $payment->attendee?->name ?? '-' }}</td>
+                    <td>
+                        <div>{{ $payment->attendee?->name ?? '-' }}</div>
+                        <div style="font-size: 10px; color: #666; margin-top: 2px;">
+                            {{ $payment->ticket_type ?? 'Individual' }}
+                        </div>
+                    </td>
                     <td>{{ $payment->attendee?->whatsapp ?? '-' }}</td>
-                    <td>{{ $payment->attendee?->event?->name ?? '-' }}</td>
                     <td>Ksh. {{ number_format($payment->amount, 2) }}</td>
                     <td>{{ $payment->mpesa_code }}</td>
                     <td class="status-{{ $payment->status }}">
@@ -132,7 +135,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="11" style="text-align: center; padding: 20px;">
+                    <td colspan="10" style="text-align: center; padding: 20px;">
                         No payments found matching the criteria.
                     </td>
                 </tr>

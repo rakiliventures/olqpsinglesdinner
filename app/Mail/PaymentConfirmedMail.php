@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\Payment;
+use App\Models\Attendee;
 use App\Services\TicketPdfService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -18,7 +19,8 @@ class PaymentConfirmedMail extends Mailable
     use Queueable, SerializesModels;
 
     public function __construct(
-        public Payment $payment
+        public Payment $payment,
+        public ?Attendee $attendee = null
     ) {}
 
     /**
@@ -36,8 +38,8 @@ class PaymentConfirmedMail extends Mailable
      */
     public function content(): Content
     {
-        // Load the attendee with all payments
-        $attendee = $this->payment->attendee->load('payments');
+        // Use provided attendee or load from payment
+        $attendee = $this->attendee ?? $this->payment->attendee->load('payments');
         
         // Calculate payment summaries
         $totalConfirmedAmount = $attendee->payments
@@ -52,6 +54,9 @@ class PaymentConfirmedMail extends Mailable
             ->where('status', 'failed')
             ->sum('amount');
 
+        // Determine ticket type
+        $ticketType = $attendee->group_ticket_id ? 'Group-of-5' : 'Individual';
+
         return new Content(
             view: 'emails.payment-confirmed',
             with: [
@@ -61,6 +66,7 @@ class PaymentConfirmedMail extends Mailable
                 'totalConfirmedAmount' => $totalConfirmedAmount,
                 'pendingAmount' => $pendingAmount,
                 'failedAmount' => $failedAmount,
+                'ticketType' => $ticketType,
             ],
         );
     }
