@@ -14,7 +14,7 @@ import { useMemo, useState, useEffect } from 'react'
 import { useForm } from '@inertiajs/react'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { CheckCircle, XCircle, CreditCard, User, Calendar, Phone, Mail, Download } from 'lucide-react'
+import { CheckCircle, XCircle, CreditCard, User, Calendar, Phone, Mail, Download, Loader2 } from 'lucide-react'
 import { useToast } from '@/components/ui/toast'
 
 interface Attendee {
@@ -43,7 +43,10 @@ export default function ManageTicketDialog() {
   const [attendee, setAttendee] = useState<Attendee | null>(null)
   const [mpesaCode, setMpesaCode] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [isCheckingMpesaCode, setIsCheckingMpesaCode] = useState(false)
+  const [mpesaCodeExists, setMpesaCodeExists] = useState(false)
   const { toast } = useToast()
 
   const form = useForm({
@@ -72,6 +75,46 @@ export default function ManageTicketDialog() {
     
     return true
   }, [mpesaCode])
+
+  // Check for duplicate M-Pesa code
+  const checkMpesaCodeExists = async (code: string) => {
+    if (!code || code.length < 6) return false
+    
+    setIsCheckingMpesaCode(true)
+    try {
+      const response = await fetch(route('singles-event.check-mpesa-code'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+        },
+        body: JSON.stringify({ mpesa_code: code })
+      })
+      
+      const data = await response.json()
+      setMpesaCodeExists(data.exists || false)
+      return data.exists || false
+    } catch (error) {
+      console.error('Error checking M-Pesa code:', error)
+      return false
+    } finally {
+      setIsCheckingMpesaCode(false)
+    }
+  }
+
+  // Debounced M-Pesa code check
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (mpesaCode && validMpesaCode) {
+        checkMpesaCodeExists(mpesaCode)
+      } else {
+        setMpesaCodeExists(false)
+      }
+    }, 500)
+
+    return () => clearTimeout(timeoutId)
+  }, [mpesaCode, validMpesaCode])
 
   const mpesaCodeError = useMemo(() => {
     const code = mpesaCode.trim()
@@ -198,6 +241,16 @@ export default function ManageTicketDialog() {
       })
       return
     }
+
+    // Check if M-Pesa code already exists
+    if (mpesaCodeExists) {
+      toast({
+        title: 'Validation Error',
+        description: 'This M-Pesa code has already been used. Please use a different transaction code.',
+        variant: 'destructive',
+      })
+      return
+    }
     
     if (!amount || amount <= 0 || !attendee) {
       toast({
@@ -207,6 +260,9 @@ export default function ManageTicketDialog() {
       })
       return
     }
+
+    // Show progress dialog
+    setIsSubmitting(true)
 
     try {
       const response = await fetch(route('singles-event.add-payment'), {
@@ -250,6 +306,8 @@ export default function ManageTicketDialog() {
         description: err instanceof Error ? err.message : 'Failed to add payment. Please try again.',
         variant: 'destructive',
       })
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -478,6 +536,12 @@ export default function ManageTicketDialog() {
                       {mpesaCodeError && mpesaCode && (
                         <p className="text-xs text-red-600">{mpesaCodeError}</p>
                       )}
+                      {mpesaCodeExists && mpesaCode && validMpesaCode && (
+                        <p className="text-xs text-red-600">This M-Pesa code has already been used. Please use a different transaction code.</p>
+                      )}
+                      {isCheckingMpesaCode && (
+                        <p className="text-xs text-blue-600">Checking M-Pesa code...</p>
+                      )}
                     </div>
 
                     <div className="grid gap-1.5 sm:gap-1">
@@ -529,6 +593,40 @@ export default function ManageTicketDialog() {
           </div>
         )}
       </DialogContent>
+
+      {/* Progress Dialog */}
+      <Dialog open={isSubmitting} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Processing Payment
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                  <Loader2 className="h-4 w-4 text-blue-600 dark:text-blue-400 animate-spin" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  Processing your payment
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Recording payment and sending admin notification...
+                </p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div className="bg-blue-600 h-2 rounded-full animate-pulse" style={{ width: '100%' }}></div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   )
 }

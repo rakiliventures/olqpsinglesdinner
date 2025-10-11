@@ -16,10 +16,6 @@ class DashboardController extends Controller
         // Get total attendees count
         $totalAttendees = Attendee::count();
         
-        // Get attendees with confirmed payments
-        $attendeesWithConfirmedPayments = Attendee::whereHas('payments', function ($query) {
-            $query->where('status', 'confirmed');
-        })->count();
         
         // Get fully paid attendees using the model method
         // Load the necessary relationships for group attendees
@@ -78,6 +74,9 @@ class DashboardController extends Controller
             return !$attendee->isFullyPaid();
         })->count();
         
+        // Get pending payments (payments requiring admin action)
+        $pendingPayments = Payment::where('status', 'pending')->count();
+        
         // Get gender distribution for attendees with confirmed payments
         $genderDistribution = Attendee::whereHas('payments', function ($query) {
             $query->where('status', 'confirmed');
@@ -101,12 +100,12 @@ class DashboardController extends Controller
         return Inertia::render('dashboard', [
             'stats' => [
                 'totalAttendees' => $totalAttendees,
-                'attendeesWithConfirmedPayments' => $attendeesWithConfirmedPayments,
                 'fullyPaidAttendees' => $fullyPaidCount,
                 'fullyPaidIndividual' => $fullyPaidIndividual,
                 'fullyPaidGroup' => $fullyPaidGroup,
                 'partiallyPaidAttendees' => $partiallyPaidAttendees,
                 'totalConfirmedRevenue' => $totalConfirmedRevenue,
+                'pendingPayments' => $pendingPayments,
             ],
             'charts' => [
                 'genderDistribution' => $genderDistribution,

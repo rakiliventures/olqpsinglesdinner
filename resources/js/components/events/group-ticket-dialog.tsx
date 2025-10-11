@@ -23,7 +23,7 @@ import {
 import { useToast } from '@/components/ui/toast'
 import { useForm } from '@inertiajs/react'
 import { useEffect, useMemo, useState } from 'react'
-import { Users, UserPlus } from 'lucide-react'
+import { Users, UserPlus, Loader2 } from 'lucide-react'
 
 interface AttendeeData {
   name: string
@@ -33,12 +33,21 @@ interface AttendeeData {
   is_olqp_member: string
 }
 
+interface FormData {
+  event_id: number | null
+  amount: string
+  mpesa_code: string
+  attendees: AttendeeData[]
+  [key: string]: any
+}
+
 export default function GroupTicketDialog({ eventId }: { eventId?: number }) {
   const [open, setOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
 
   const form = useForm({
-    event_id: eventId ?? null as unknown as number | null,
+    event_id: eventId ?? null,
     amount: '22500',
     mpesa_code: '',
     attendees: [
@@ -47,7 +56,7 @@ export default function GroupTicketDialog({ eventId }: { eventId?: number }) {
       { name: '', email: '', whatsapp: '', gender: '', is_olqp_member: '' },
       { name: '', email: '', whatsapp: '', gender: '', is_olqp_member: '' },
       { name: '', email: '', whatsapp: '', gender: '', is_olqp_member: '' },
-    ] as AttendeeData[],
+    ],
   })
 
   const numericAmount = useMemo(() => {
@@ -58,7 +67,7 @@ export default function GroupTicketDialog({ eventId }: { eventId?: number }) {
   // M-Pesa code validation
   const mpesaCodeValidation = useMemo(() => {
     const code = form.data.mpesa_code
-    if (!code) return { isValid: false, message: '' }
+    if (!code || typeof code !== 'string') return { isValid: false, message: '' }
     
     // Check if contains only letters and digits
     const isValidFormat = /^[A-Z0-9]+$/.test(code)
@@ -88,6 +97,49 @@ export default function GroupTicketDialog({ eventId }: { eventId?: number }) {
     return { isValid: true, message: '' }
   }, [form.data.mpesa_code])
 
+  // Check for duplicate M-Pesa code
+  const [isCheckingMpesaCode, setIsCheckingMpesaCode] = useState(false)
+  const [mpesaCodeExists, setMpesaCodeExists] = useState(false)
+
+  const checkMpesaCodeExists = async (code: string) => {
+    if (!code || code.length < 6) return false
+    
+    setIsCheckingMpesaCode(true)
+    try {
+      const response = await fetch(route('singles-event.check-mpesa-code'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+        },
+        body: JSON.stringify({ mpesa_code: code })
+      })
+      
+      const data = await response.json()
+      setMpesaCodeExists(data.exists || false)
+      return data.exists || false
+    } catch (error) {
+      console.error('Error checking M-Pesa code:', error)
+      return false
+    } finally {
+      setIsCheckingMpesaCode(false)
+    }
+  }
+
+  // Debounced M-Pesa code check
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (form.data.mpesa_code && mpesaCodeValidation.isValid) {
+        checkMpesaCodeExists(form.data.mpesa_code)
+      } else {
+        setMpesaCodeExists(false)
+      }
+    }, 500)
+
+    return () => clearTimeout(timeoutId)
+  }, [form.data.mpesa_code, mpesaCodeValidation.isValid])
+
   // Validate all attendees are filled
   const allAttendeesFilled = useMemo(() => {
     return form.data.attendees.every(attendee => 
@@ -112,6 +164,16 @@ export default function GroupTicketDialog({ eventId }: { eventId?: number }) {
       return
     }
 
+    // Check if M-Pesa code already exists
+    if (mpesaCodeExists) {
+      toast({ 
+        title: 'Validation Error', 
+        description: 'This M-Pesa code has already been used. Please use a different transaction code.',
+        variant: 'destructive'
+      })
+      return
+    }
+
     // Validate all attendees are filled
     if (!allAttendeesFilled) {
       toast({ 
@@ -121,6 +183,9 @@ export default function GroupTicketDialog({ eventId }: { eventId?: number }) {
       })
       return
     }
+
+    // Show progress dialog
+    setIsSubmitting(true)
 
     form.transform((data) => ({
       ...data,
@@ -132,14 +197,19 @@ export default function GroupTicketDialog({ eventId }: { eventId?: number }) {
     }))
     form.post(route('singles-event.purchase-group-ticket'), {
       onSuccess: () => {
-        setOpen(false)
-        form.reset()
-        toast({
-          title: 'Success',
-          description: 'Group ticket registered successfully!',
-        })
+        setIsSubmitting(false)
+        // Small delay to ensure progress dialog closes first
+        setTimeout(() => {
+          setOpen(false)
+          form.reset()
+          toast({
+            title: 'Success',
+            description: 'Group ticket registered successfully! You will receive a notification once your payment has been confirmed.',
+          })
+        }, 100)
       },
       onError: () => {
+        setIsSubmitting(false)
         toast({
           title: 'Error',
           description: 'Failed to register group ticket. Please try again.',
@@ -178,19 +248,19 @@ export default function GroupTicketDialog({ eventId }: { eventId?: number }) {
           Group Ticket (5 Pax)
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto w-[95vw] sm:w-full">
         <DialogHeader>
           <DialogTitle className="text-lg sm:text-xl flex items-center gap-2">
             <UserPlus className="w-5 h-5" />
             Group Ticket Registration (5 People)
           </DialogTitle>
           <DialogDescription className="text-sm">
-            Register 5 people for the discounted group rate of Ksh. 22,500 (Ksh. 4,500 per person).
+            Register 5 people for the discounted group rate of Ksh. 22,500 (Ksh. 4,500 per person). The amount must be paid in full.
           </DialogDescription>
         </DialogHeader>
 
-        <Alert className="mb-4 bg-green-100 text-green-800">
-          <AlertDescription className="text-sm">
+        <Alert className="mb-3 sm:mb-4 bg-green-100 text-green-800">
+          <AlertDescription className="text-xs sm:text-sm">
             <p className="mb-1">PayBill: <strong>7171186</strong></p>
             <p>Account: <strong>DINNER</strong></p>
             <p className="mt-2 font-semibold">Group Rate: Ksh. 22,500 for 5 people (Ksh. 4,500 per person)</p>
@@ -199,10 +269,10 @@ export default function GroupTicketDialog({ eventId }: { eventId?: number }) {
 
         <form onSubmit={handleSubmit} className="grid gap-4">
           {/* Payment Information */}
-          <div className="grid gap-4 p-4 bg-gray-50 rounded-lg">
-            <h3 className="text-lg font-semibold text-gray-800">Payment Information</h3>
+          <div className="grid gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800">Payment Information</h3>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-2">
                 <Label htmlFor="amount">Amount Paid (Ksh.)</Label>
                 <Input
@@ -230,6 +300,12 @@ export default function GroupTicketDialog({ eventId }: { eventId?: number }) {
                 {!mpesaCodeValidation.isValid && form.data.mpesa_code && (
                   <p className="text-sm text-red-600">{mpesaCodeValidation.message}</p>
                 )}
+                {mpesaCodeExists && form.data.mpesa_code && mpesaCodeValidation.isValid && (
+                  <p className="text-sm text-red-600">This M-Pesa code has already been used. Please use a different transaction code.</p>
+                )}
+                {isCheckingMpesaCode && (
+                  <p className="text-sm text-blue-600">Checking M-Pesa code...</p>
+                )}
               </div>
             </div>
 
@@ -244,14 +320,14 @@ export default function GroupTicketDialog({ eventId }: { eventId?: number }) {
           </div>
 
           {/* Attendees Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-800">Attendees Information (5 People Required)</h3>
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800">Attendees Information (5 People Required)</h3>
             
             {form.data.attendees.map((attendee, index) => (
-              <div key={index} className="p-4 border border-gray-200 rounded-lg bg-white">
-                <h4 className="font-medium text-gray-700 mb-3">Person {index + 1}</h4>
+              <div key={index} className="p-3 sm:p-4 border border-gray-200 rounded-lg bg-white">
+                <h4 className="font-medium text-gray-700 mb-2 sm:mb-3 text-sm sm:text-base">Person {index + 1}</h4>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   <div className="space-y-2">
                     <Label htmlFor={`name-${index}`}>Full Name</Label>
                     <Input
@@ -261,7 +337,7 @@ export default function GroupTicketDialog({ eventId }: { eventId?: number }) {
                       onChange={(e) => handleAttendeeChange(index, 'name', e.target.value)}
                       placeholder="Enter full name"
                     />
-                    <InputError message={form.errors[`attendees.${index}.name`]} className="mt-1" />
+                    <InputError message={form.errors[`attendees.${index}.name` as keyof typeof form.errors]} className="mt-1" />
                   </div>
 
                   <div className="space-y-2">
@@ -273,7 +349,7 @@ export default function GroupTicketDialog({ eventId }: { eventId?: number }) {
                       onChange={(e) => handleAttendeeChange(index, 'email', e.target.value)}
                       placeholder="Enter email address"
                     />
-                    <InputError message={form.errors[`attendees.${index}.email`]} className="mt-1" />
+                    <InputError message={form.errors[`attendees.${index}.email` as keyof typeof form.errors]} className="mt-1" />
                   </div>
 
                   <div className="space-y-2">
@@ -285,7 +361,7 @@ export default function GroupTicketDialog({ eventId }: { eventId?: number }) {
                       onChange={(e) => handleAttendeeChange(index, 'whatsapp', e.target.value)}
                       placeholder="Enter WhatsApp number"
                     />
-                    <InputError message={form.errors[`attendees.${index}.whatsapp`]} className="mt-1" />
+                    <InputError message={form.errors[`attendees.${index}.whatsapp` as keyof typeof form.errors]} className="mt-1" />
                   </div>
 
                   <div className="space-y-2">
@@ -302,7 +378,7 @@ export default function GroupTicketDialog({ eventId }: { eventId?: number }) {
                         <SelectItem value="Female">Female</SelectItem>
                       </SelectContent>
                     </Select>
-                    <InputError message={form.errors[`attendees.${index}.gender`]} className="mt-1" />
+                    <InputError message={form.errors[`attendees.${index}.gender` as keyof typeof form.errors]} className="mt-1" />
                   </div>
 
                   <div className="space-y-2">
@@ -312,39 +388,73 @@ export default function GroupTicketDialog({ eventId }: { eventId?: number }) {
                       onValueChange={(value) => handleAttendeeChange(index, 'is_olqp_member', value)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Are you an OLQP member?" />
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="yes">Yes</SelectItem>
                         <SelectItem value="no">No</SelectItem>
                       </SelectContent>
                     </Select>
-                    <InputError message={form.errors[`attendees.${index}.is_olqp_member`]} className="mt-1" />
+                    <InputError message={form.errors[`attendees.${index}.is_olqp_member` as keyof typeof form.errors]} className="mt-1" />
                   </div>
                 </div>
               </div>
             ))}
           </div>
 
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <Button
               type="button"
               variant="outline"
               onClick={handleClose}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto order-2 sm:order-1"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={form.processing || !allAttendeesFilled || !mpesaCodeValidation.isValid}
-              className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
+              className="w-full sm:w-auto bg-green-600 hover:bg-green-700 order-1 sm:order-2"
             >
               {form.processing ? 'Registering Group...' : 'Register Group Ticket'}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
+
+      {/* Progress Dialog */}
+      <Dialog open={isSubmitting} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Processing Group Registration
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                  <Loader2 className="h-4 w-4 text-green-600 dark:text-green-400 animate-spin" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  Processing your group ticket registration
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Creating 5 attendee records and sending admin notification...
+                </p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div className="bg-green-600 h-2 rounded-full animate-pulse" style={{ width: '100%' }}></div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   )
 }

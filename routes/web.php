@@ -62,5 +62,9 @@ Route::post('/singles-event/add-payment', [EventsController::class, 'addPayment'
 Route::get('/singles-event/download-ticket/{attendee}', [EventsController::class, 'downloadTicket'])
     ->name('singles-event.download-ticket');
 
+Route::post('/singles-event/check-mpesa-code', [EventsController::class, 'checkMpesaCode'])
+    ->name('singles-event.check-mpesa-code')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

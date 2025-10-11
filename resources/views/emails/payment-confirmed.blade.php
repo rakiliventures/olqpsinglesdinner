@@ -322,16 +322,22 @@
                 @endif
             </div>
 
-            <div class="ticket-status {{ $totalConfirmedAmount >= 4999 ? 'fully-paid' : 'partially-paid' }}">
+            @php
+                // Determine required amount based on ticket type
+                $requiredAmount = $ticketType === 'Group-of-5' ? 22500 : 4999;
+                $isFullyPaid = $totalConfirmedAmount >= $requiredAmount;
+            @endphp
+
+            <div class="ticket-status {{ $isFullyPaid ? 'fully-paid' : 'partially-paid' }}">
                 <h3>Ticket Status</h3>
-                @if($totalConfirmedAmount >= 4999)
+                @if($isFullyPaid)
                     <div class="detail-row">
                         <span class="detail-label">Status:</span>
                         <span class="detail-value status">✅ Fully Booked</span>
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Message:</span>
-                        <span class="detail-value">Your ticket is fully paid and confirmed!</span>
+                        <span class="detail-value">Your {{ $ticketType }} ticket is fully paid and confirmed!</span>
                     </div>
                 @else
                     <div class="detail-row">
@@ -340,11 +346,11 @@
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Remaining Balance:</span>
-                        <span class="detail-value balance-amount">Ksh. {{ number_format(4999 - $totalConfirmedAmount) }}</span>
+                        <span class="detail-value balance-amount">Ksh. {{ number_format($requiredAmount - $totalConfirmedAmount) }}</span>
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Message:</span>
-                        <span class="detail-value">Please complete your payment to secure your full ticket.</span>
+                        <span class="detail-value">Please complete your payment to secure your full {{ $ticketType }} ticket.</span>
                     </div>
                 @endif
             </div>
@@ -371,10 +377,10 @@
 
             <div class="message">
                 <strong>What's Next?</strong><br>
-                @if($totalConfirmedAmount >= 4999)
+                @if($isFullyPaid)
                      <strong>Your event ticket is attached to this email!</strong> Please save both this confirmation email and the attached PDF ticket. You may be required to show either at the event entrance. The ticket contains a QR code for quick verification.
                 @else
-                    Please save this confirmation email. You may be required to show it at the event entrance. Once your payment is complete (Ksh. 4,999), you will receive an event ticket with QR code for verification.
+                    Please save this confirmation email. You may be required to show it at the event entrance. Once your payment is complete (Ksh. {{ number_format($requiredAmount) }}), you will receive an event ticket with QR code for verification.
                 @endif
                 <br><br>
                 We look forward to seeing you at this exciting evening of fun, networking and great experiences!

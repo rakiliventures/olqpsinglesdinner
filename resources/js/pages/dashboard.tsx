@@ -19,12 +19,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 interface DashboardProps {
     stats: {
         totalAttendees: number;
-        attendeesWithConfirmedPayments: number;
         fullyPaidAttendees: number;
         fullyPaidIndividual: number;
         fullyPaidGroup: number;
         partiallyPaidAttendees: number;
         totalConfirmedRevenue: number;
+        pendingPayments: number;
     };
     charts: {
         genderDistribution: Record<string, number>;
@@ -93,17 +93,6 @@ export default function Dashboard({ stats, charts }: DashboardProps) {
 
                     <Card className="border-sidebar-border/70 dark:border-sidebar-border">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">With Confirmed Payments</CardTitle>
-                            <CreditCard className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{stats.attendeesWithConfirmedPayments}</div>
-                            <p className="text-xs text-muted-foreground">Attendees who have paid</p>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="border-sidebar-border/70 dark:border-sidebar-border">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Fully Paid</CardTitle>
                             <CheckCircle className="h-4 w-4 text-green-600" />
                         </CardHeader>
@@ -137,6 +126,17 @@ export default function Dashboard({ stats, charts }: DashboardProps) {
                                 Ksh. {stats.totalConfirmedRevenue.toLocaleString()}
                             </div>
                             <p className="text-xs text-muted-foreground">Confirmed payments only</p>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border-sidebar-border/70 dark:border-sidebar-border">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Pending Action</CardTitle>
+                            <AlertCircle className="h-4 w-4 text-red-600" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold text-red-600">{stats.pendingPayments || 0}</div>
+                            <p className="text-xs text-muted-foreground">Payments requiring confirmation</p>
                         </CardContent>
                     </Card>
                 </div>

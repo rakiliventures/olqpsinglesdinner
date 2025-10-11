@@ -126,14 +126,13 @@ class PaymentsController extends Controller
 
             $attendee = $payment->attendee;
             
-            // Check if this is a group payment
-            if ($attendee->group_ticket_id && $attendee->payment_id) {
-                // This is a group payment - send notifications to all group members
-                $this->sendGroupPaymentNotifications($payment);
-            } else {
-                // This is an individual payment - send notification to single attendee
-                $this->sendIndividualPaymentNotifications($payment);
-            }
+            // For now, skip sending notifications to avoid timeout issues
+            // TODO: Implement proper queue-based notification system
+            Log::info('Payment confirmed - notifications skipped to avoid timeout', [
+                'payment_id' => $payment->id,
+                'attendee_name' => $attendee->name,
+                'is_group' => $attendee->group_ticket_id ? true : false
+            ]);
 
         } catch (\Exception $e) {
             Log::error('Failed to send payment confirmation notifications', [

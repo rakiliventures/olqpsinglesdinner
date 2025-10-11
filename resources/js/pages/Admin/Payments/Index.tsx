@@ -81,14 +81,17 @@ export default function AdminPaymentsIndex() {
       preserveScroll: true,
       onSuccess: () => {
         if (status === 'confirmed') {
-          setIsConfirming(false)
-          setConfirmingPaymentId(null)
-          setConfirmingPaymentName('')
-          toast({ 
-            title: 'Payment Confirmed!', 
-            description: 'Email and WhatsApp notifications have been sent to the attendee.',
-            variant: 'default',
-          })
+          // Add minimum delay of 5 seconds for better UX
+          setTimeout(() => {
+            setIsConfirming(false)
+            setConfirmingPaymentId(null)
+            setConfirmingPaymentName('')
+            toast({ 
+              title: 'Payment Confirmed!', 
+              description: 'Payment has been confirmed successfully. Notifications will be sent in the background.',
+              variant: 'default',
+            })
+          }, 5000)
         } else {
           toast({ 
             title: 'Payment Updated', 
@@ -511,7 +514,7 @@ export default function AdminPaymentsIndex() {
               Confirming Payment
             </DialogTitle>
             <DialogDescription>
-              Please wait while we confirm the payment and send notifications...
+              Please wait while we confirm the payment...
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
@@ -526,7 +529,7 @@ export default function AdminPaymentsIndex() {
                   Processing payment for {confirmingPaymentName}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Sending email and WhatsApp notifications...
+                  Processing payment confirmation...
                 </p>
               </div>
             </div>

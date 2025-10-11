@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\NewPaymentNotificationMail;
 use App\Models\Attendee;
 use App\Models\Event;
 use App\Models\GroupTicket;
@@ -12,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
@@ -92,6 +94,16 @@ class EventsController extends Controller
                 'method' => 'mpesa',
             ]);
 
+            // Send admin notification
+            try {
+                Mail::send(new NewPaymentNotificationMail($payment, $attendee));
+            } catch (\Exception $e) {
+                Log::error('Failed to send admin notification for additional payment', [
+                    'error' => $e->getMessage(),
+                    'payment_id' => $payment->id,
+                ]);
+            }
+
             DB::commit();
 
             // Return updated attendee data
@@ -167,12 +179,22 @@ class EventsController extends Controller
                 'is_olqp_member' => (bool) $validated['is_olqp_member'],
             ]);
 
-            $attendee->payments()->create([
+            $payment = $attendee->payments()->create([
                 'amount' => $validated['amount'],
                 'mpesa_code' => $validated['mpesa_code'],
                 'status' => 'pending',
                 'method' => 'mpesa',
             ]);
+
+            // Send admin notification
+            try {
+                Mail::send(new NewPaymentNotificationMail($payment, $attendee));
+            } catch (\Exception $e) {
+                Log::error('Failed to send admin notification', [
+                    'error' => $e->getMessage(),
+                    'payment_id' => $payment->id,
+                ]);
+            }
 
             DB::commit();
         } catch (\Throwable $e) {
@@ -334,6 +356,16 @@ class EventsController extends Controller
                 $attendee->update(['payment_id' => $groupPayment->id]);
             }
 
+            // Send admin notification
+            try {
+                Mail::send(new NewPaymentNotificationMail($groupPayment, $attendees[0]));
+            } catch (\Exception $e) {
+                Log::error('Failed to send admin notification for group ticket', [
+                    'error' => $e->getMessage(),
+                    'payment_id' => $groupPayment->id,
+                ]);
+            }
+
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -348,5 +380,21 @@ class EventsController extends Controller
         }
 
         return back()->with('success', 'Group ticket registered successfully for 5 people.');
+    }
+
+    public function checkMpesaCode(Request $request)
+    {
+        $request->validate([
+            'mpesa_code' => 'required|string|max:20'
+        ]);
+
+        $mpesaCode = strtoupper(trim($request->mpesa_code));
+        
+        // Check if M-Pesa code already exists in payments table
+        $exists = Payment::where('mpesa_code', $mpesaCode)->exists();
+        
+        return response()->json([
+            'exists' => $exists
+        ]);
     }
 }

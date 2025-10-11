@@ -198,7 +198,7 @@ class WhatsAppService
                 'filename' => 'OLQP_Singles_Dinner_2025_Ticket.pdf'
             ];
 
-            $uploadResponse = Http::withHeaders([
+            $uploadResponse = Http::timeout(10)->withHeaders([
                 'Authorization' => 'Bearer ' . $this->apiKey,
                 'Content-Type' => 'application/json',
             ])->post($uploadUrl, $uploadBody);
@@ -234,7 +234,7 @@ class WhatsAppService
                 ]
             ];
 
-            $documentResponse = Http::withHeaders([
+            $documentResponse = Http::timeout(10)->withHeaders([
                 'Authorization' => 'Bearer ' . $this->apiKey,
                 'Content-Type' => 'application/json',
             ])->post($documentUrl, $documentBody);
@@ -298,7 +298,7 @@ class WhatsAppService
                 'has_api_key' => !empty($this->apiKey)
             ]);
 
-            $response = Http::withHeaders([
+            $response = Http::timeout(10)->withHeaders([
                 'Authorization' => 'Bearer ' . $this->apiKey,
                 'Content-Type' => 'application/json',
             ])->post($requestUrl, $requestBody);
