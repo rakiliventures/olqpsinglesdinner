@@ -42,6 +42,11 @@ export default function AdminAttendeesIndex() {
   const [resendingTicketId, setResendingTicketId] = useState<number | null>(null)
   const [resendingTicketName, setResendingTicketName] = useState<string>('')
   
+  // Send reminder progress dialog
+  const [isSendingReminder, setIsSendingReminder] = useState(false)
+  const [sendingReminderId, setSendingReminderId] = useState<number | null>(null)
+  const [sendingReminderName, setSendingReminderName] = useState<string>('')
+  
   // Bulk action progress dialogs
   const [isBulkResendingTickets, setIsBulkResendingTickets] = useState(false)
   const [isBulkSendingReminders, setIsBulkSendingReminders] = useState(false)
@@ -98,11 +103,26 @@ export default function AdminAttendeesIndex() {
     })
   }
 
-  function sendReminder(id: number) {
+  function sendReminder(id: number, attendeeName?: string) {
+    // Show progress dialog
+    setIsSendingReminder(true)
+    setSendingReminderId(id)
+    setSendingReminderName(attendeeName || 'Unknown')
+
     sendReminderForm.post(route('admin.attendees.send-reminder', id), {
       preserveScroll: true,
-      onSuccess: () => toast({ title: 'Reminder sent successfully' }),
-      onError: () => toast({ title: 'Failed to send reminder', variant: 'destructive' }),
+      onSuccess: () => {
+        setIsSendingReminder(false)
+        setSendingReminderId(null)
+        setSendingReminderName('')
+        toast({ title: 'Reminder sent successfully' })
+      },
+      onError: () => {
+        setIsSendingReminder(false)
+        setSendingReminderId(null)
+        setSendingReminderName('')
+        toast({ title: 'Failed to send reminder', variant: 'destructive' })
+      },
     })
   }
 
@@ -260,7 +280,7 @@ export default function AdminAttendeesIndex() {
                       <SendReminderButton 
                         attendeeId={a.id} 
                         attendeeName={a.name}
-                        onSendReminder={sendReminder}
+                        onSendReminder={(id) => sendReminder(id, a.name)}
                         processing={sendReminderForm.processing}
                       />
                     )}
@@ -336,6 +356,40 @@ export default function AdminAttendeesIndex() {
               <div className="mt-4">
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                   <div className="bg-green-600 h-2 rounded-full animate-pulse" style={{ width: '100%' }}></div>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Progress Dialog for Send Reminder */}
+        <Dialog open={isSendingReminder} onOpenChange={() => {}}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Sending Reminder
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
+                    <BellIcon className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    Sending reminder to {sendingReminderName}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Preparing payment reminder email...
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4">
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div className="bg-yellow-600 h-2 rounded-full animate-pulse" style={{ width: '100%' }}></div>
                 </div>
               </div>
             </div>
