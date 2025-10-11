@@ -274,6 +274,10 @@
             TICKET #{{ $attendee->id }}
         </div>
         
+        <div class="ticket-type" style="background: #2c3e50; color: #ecf0f1; padding: 3px; text-align: center; font-size: 8px; font-weight: bold; letter-spacing: 0.3px;">
+            {{ $ticketType }}
+        </div>
+        
         <div class="content">
             <div style="display: flex; gap: 6px; margin-bottom: 6px;">
                 <div class="attendee-info" style="flex: 1;">

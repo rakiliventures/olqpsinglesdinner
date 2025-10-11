@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Payment;
+use App\Models\Attendee;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -21,10 +22,10 @@ class WhatsAppService
         $this->phoneNumberId = config('services.whatsapp.phone_number_id', '');
     }
 
-    public function sendPaymentConfirmation(Payment $payment): bool
+    public function sendPaymentConfirmation(Payment $payment, ?Attendee $attendee = null): bool
     {
         try {
-            $attendee = $payment->attendee;
+            $attendee = $attendee ?? $payment->attendee;
             $event = $attendee->event;
 
             if (!$attendee->whatsapp) {
@@ -112,12 +113,16 @@ class WhatsAppService
             ->where('status', 'failed')
             ->sum('amount');
 
+        // Determine ticket type
+        $ticketType = $attendee->group_ticket_id ? 'Group-of-5' : 'Individual';
+        
         $message = "🎉 *Payment Confirmed!*\n\n";
         $message .= "Dear *{$attendee->name}*,\n\n";
         $message .= "Your payment has been successfully confirmed for the *OLQP Singles Dinner 2025*.\n\n";
         
         $message .= "📋 *Latest Payment Details:*\n";
         $message .= "• Event Ticket Number: {$attendee->id}\n";
+        $message .= "• Ticket Type: *{$ticketType}*\n";
         $message .= "• Amount Confirmed: Ksh. " . number_format($payment->amount) . "\n";
         $message .= "• M-Pesa Code: {$payment->mpesa_code}\n";
         $message .= "• Payment Method: " . ucfirst($payment->method) . "\n";
@@ -135,12 +140,13 @@ class WhatsAppService
         }
         
         $message .= "\n🎫 *Ticket Status:*\n";
-        if ($totalConfirmedAmount >= 4999) {
+        if ($attendee->isFullyPaid()) {
             $message .= "• Status: ✅ *Fully Booked*\n";
             $message .= "• Message: Your ticket is fully paid and confirmed!\n";
             $message .= "• 🎫 *Your event ticket is attached to this message!*\n";
         } else {
-            $remainingBalance = 4999 - $totalConfirmedAmount;
+            $requiredAmount = $attendee->getRequiredAmount();
+            $remainingBalance = $requiredAmount - $totalConfirmedAmount;
             $message .= "• Status: ⚠️ *Partially Paid*\n";
             $message .= "• Remaining Balance: Ksh. " . number_format($remainingBalance) . "\n";
             $message .= "• Message: Please complete your payment to secure your full ticket.\n";
@@ -152,10 +158,11 @@ class WhatsAppService
         $message .= "• Time: 6:00 PM - 12:00 AM\n";
         $message .= "• Venue: The Edge, South C\n\n";
 
-        if ($totalConfirmedAmount >= 4999) {
+        if ($attendee->isFullyPaid()) {
             $message .= "🎫 *Your event ticket is attached to this message!* Please save both this message and the attached PDF ticket. You may need to show either at the event entrance. The ticket contains a QR code for quick verification.\n\n";
         } else {
-            $message .= "Please save this message. You may need to show it at the event entrance. Once your payment is complete (Ksh. 4,999), you will receive an event ticket with QR code for verification.\n\n";
+            $requiredAmount = $attendee->getRequiredAmount();
+            $message .= "Please save this message. You may need to show it at the event entrance. Once your payment is complete (Ksh. " . number_format($requiredAmount) . "), you will receive an event ticket with QR code for verification.\n\n";
         }
 
         $message .= "For any questions, contact us at 0777111000.\n\n";
@@ -191,7 +198,7 @@ class WhatsAppService
                 'filename' => 'OLQP_Singles_Dinner_2025_Ticket.pdf'
             ];
 
-            $uploadResponse = Http::withHeaders([
+            $uploadResponse = Http::timeout(10)->withHeaders([
                 'Authorization' => 'Bearer ' . $this->apiKey,
                 'Content-Type' => 'application/json',
             ])->post($uploadUrl, $uploadBody);
@@ -227,7 +234,7 @@ class WhatsAppService
                 ]
             ];
 
-            $documentResponse = Http::withHeaders([
+            $documentResponse = Http::timeout(10)->withHeaders([
                 'Authorization' => 'Bearer ' . $this->apiKey,
                 'Content-Type' => 'application/json',
             ])->post($documentUrl, $documentBody);
@@ -291,7 +298,7 @@ class WhatsAppService
                 'has_api_key' => !empty($this->apiKey)
             ]);
 
-            $response = Http::withHeaders([
+            $response = Http::timeout(10)->withHeaders([
                 'Authorization' => 'Bearer ' . $this->apiKey,
                 'Content-Type' => 'application/json',
             ])->post($requestUrl, $requestBody);

@@ -3,9 +3,10 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useToast } from '@/components/ui/toast'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Head, usePage, router } from '@inertiajs/react'
 import { useState, useMemo } from 'react'
-import { CheckCircle, AlertCircle, Mail, MessageCircle, User, Trash2, CreditCard, TrendingUp, XCircle, Clock, Search, Download, FileText, Table as TableIcon } from 'lucide-react'
+import { CheckCircle, AlertCircle, Mail, MessageCircle, User, Trash2, CreditCard, TrendingUp, XCircle, Clock, Search, Download, FileText, Table as TableIcon, Loader2 } from 'lucide-react'
 
  type PaymentRow = {
   id: number
@@ -16,6 +17,7 @@ import { CheckCircle, AlertCircle, Mail, MessageCircle, User, Trash2, CreditCard
   mpesa_code: string
   status: 'pending' | 'confirmed' | 'failed'
   method: string
+  ticket_type: string
   created_at?: string | null
   actioned_by_name?: string | null
   actioned_at?: string | null
@@ -34,6 +36,11 @@ export default function AdminPaymentsIndex() {
   // Search and filter state
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  
+  // Progress dialog state
+  const [isConfirming, setIsConfirming] = useState(false)
+  const [confirmingPaymentId, setConfirmingPaymentId] = useState<number | null>(null)
+  const [confirmingPaymentName, setConfirmingPaymentName] = useState<string>('')
 
   // Filtered payments based on search and status filter
   const filteredPayments = useMemo(() => {
@@ -57,18 +64,34 @@ export default function AdminPaymentsIndex() {
     confirmed: filteredPayments.filter(p => p.status === 'confirmed').length,
     failed: filteredPayments.filter(p => p.status === 'failed').length,
     pending: filteredPayments.filter(p => p.status === 'pending').length,
+    totalConfirmedAmount: filteredPayments
+      .filter(p => p.status === 'confirmed')
+      .reduce((sum, p) => sum + p.amount, 0),
   }
 
-  function updateStatus(id: number, status: PaymentRow['status']) {
+  function updateStatus(id: number, status: PaymentRow['status'], attendeeName?: string) {
+    // Show progress dialog for confirmation
+    if (status === 'confirmed') {
+      setIsConfirming(true)
+      setConfirmingPaymentId(id)
+      setConfirmingPaymentName(attendeeName || 'Unknown')
+    }
+
     router.put(route('admin.payments.update', id), { status }, {
       preserveScroll: true,
       onSuccess: () => {
         if (status === 'confirmed') {
-          toast({ 
-            title: 'Payment Confirmed!', 
-            description: 'Email and WhatsApp notifications have been sent to the attendee.',
-            variant: 'default',
-          })
+          // Add minimum delay of 5 seconds for better UX
+          setTimeout(() => {
+            setIsConfirming(false)
+            setConfirmingPaymentId(null)
+            setConfirmingPaymentName('')
+            toast({ 
+              title: 'Payment Confirmed!', 
+              description: 'Payment has been confirmed successfully. Notifications will be sent in the background.',
+              variant: 'default',
+            })
+          }, 5000)
         } else {
           toast({ 
             title: 'Payment Updated', 
@@ -78,6 +101,9 @@ export default function AdminPaymentsIndex() {
         }
       },
       onError: () => {
+        setIsConfirming(false)
+        setConfirmingPaymentId(null)
+        setConfirmingPaymentName('')
         toast({ 
           title: 'Error', 
           description: 'Failed to update payment status. Please try again.',
@@ -110,46 +136,40 @@ export default function AdminPaymentsIndex() {
   }
 
   function exportToPDF() {
-    router.get(route('admin.payments.export.pdf'), {
-      search: searchTerm,
-      status: statusFilter
-    }, {
-      onSuccess: () => {
-        toast({ 
-          title: 'PDF Export Started', 
-          description: 'Your PDF export will download shortly.',
-          variant: 'default',
-        })
-      },
-      onError: () => {
-        toast({ 
-          title: 'Export Error', 
-          description: 'Failed to export PDF. Please try again.',
-          variant: 'destructive',
-        })
-      }
+    // Build query parameters
+    const params = new URLSearchParams()
+    if (searchTerm) params.append('search', searchTerm)
+    if (statusFilter !== 'all') params.append('status', statusFilter)
+    
+    // Create direct download link
+    const url = route('admin.payments.export.pdf') + (params.toString() ? '?' + params.toString() : '')
+    
+    // Open in new window to trigger download
+    window.open(url, '_blank')
+    
+    toast({ 
+      title: 'PDF Export Started', 
+      description: 'Your PDF export will download shortly.',
+      variant: 'default',
     })
   }
 
   function exportToExcel() {
-    router.get(route('admin.payments.export.excel'), {
-      search: searchTerm,
-      status: statusFilter
-    }, {
-      onSuccess: () => {
-        toast({ 
-          title: 'CSV Export Started', 
-          description: 'Your CSV export will download shortly.',
-          variant: 'default',
-        })
-      },
-      onError: () => {
-        toast({ 
-          title: 'Export Error', 
-          description: 'Failed to export CSV. Please try again.',
-          variant: 'destructive',
-        })
-      }
+    // Build query parameters
+    const params = new URLSearchParams()
+    if (searchTerm) params.append('search', searchTerm)
+    if (statusFilter !== 'all') params.append('status', statusFilter)
+    
+    // Create direct download link
+    const url = route('admin.payments.export.excel') + (params.toString() ? '?' + params.toString() : '')
+    
+    // Open in new window to trigger download
+    window.open(url, '_blank')
+    
+    toast({ 
+      title: 'CSV Export Started', 
+      description: 'Your CSV export will download shortly.',
+      variant: 'default',
     })
   }
 
@@ -191,7 +211,7 @@ export default function AdminPaymentsIndex() {
         </div>
 
         {/* Payment Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -236,6 +256,20 @@ export default function AdminPaymentsIndex() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Pending Action</p>
                 <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{paymentSummary.pending}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <TrendingUp className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Confirmed</p>
+                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                  Ksh. {paymentSummary.totalConfirmedAmount.toLocaleString()}
+                </p>
               </div>
             </div>
           </div>
@@ -348,6 +382,9 @@ export default function AdminPaymentsIndex() {
                   <TableCell className="font-medium">
                     <div>
                       <div className="font-medium">{p.attendee_name ?? '-'}</div>
+                      <div className="text-xs text-blue-600 dark:text-blue-400 font-semibold mt-1">
+                        {p.ticket_type}
+                      </div>
                       {p.attendee_phone && (
                         <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                           {p.attendee_phone}
@@ -387,7 +424,7 @@ export default function AdminPaymentsIndex() {
                         <>
                           <Button 
                             size="sm" 
-                            onClick={() => updateStatus(p.id, 'confirmed')}
+                            onClick={() => updateStatus(p.id, 'confirmed', p.attendee_name || 'Unknown')}
                             className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-1"
                           >
                             <CheckCircle className="h-3 w-3" />
@@ -407,7 +444,7 @@ export default function AdminPaymentsIndex() {
                       {p.status === 'failed' && (
                         <Button 
                           size="sm" 
-                          onClick={() => updateStatus(p.id, 'confirmed')}
+                          onClick={() => updateStatus(p.id, 'confirmed', p.attendee_name || 'Unknown')}
                           className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-1"
                         >
                           <CheckCircle className="h-3 w-3" />
@@ -467,6 +504,43 @@ export default function AdminPaymentsIndex() {
           </div>
         </div>
       </div>
+
+      {/* Progress Dialog */}
+      <Dialog open={isConfirming} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Confirming Payment
+            </DialogTitle>
+            <DialogDescription>
+              Please wait while we confirm the payment...
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                  <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  Processing payment for {confirmingPaymentName}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Processing payment confirmation...
+                </p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div className="bg-green-600 h-2 rounded-full animate-pulse" style={{ width: '100%' }}></div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   )
 }
