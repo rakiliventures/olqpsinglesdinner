@@ -3,9 +3,10 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useToast } from '@/components/ui/toast'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Head, usePage, router } from '@inertiajs/react'
 import { useState, useMemo } from 'react'
-import { CheckCircle, AlertCircle, Mail, MessageCircle, User, Trash2, CreditCard, TrendingUp, XCircle, Clock, Search, Download, FileText, Table as TableIcon } from 'lucide-react'
+import { CheckCircle, AlertCircle, Mail, MessageCircle, User, Trash2, CreditCard, TrendingUp, XCircle, Clock, Search, Download, FileText, Table as TableIcon, Loader2 } from 'lucide-react'
 
  type PaymentRow = {
   id: number
@@ -16,6 +17,7 @@ import { CheckCircle, AlertCircle, Mail, MessageCircle, User, Trash2, CreditCard
   mpesa_code: string
   status: 'pending' | 'confirmed' | 'failed'
   method: string
+  ticket_type: string
   created_at?: string | null
   actioned_by_name?: string | null
   actioned_at?: string | null
@@ -34,6 +36,11 @@ export default function AdminPaymentsIndex() {
   // Search and filter state
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  
+  // Progress dialog state
+  const [isConfirming, setIsConfirming] = useState(false)
+  const [confirmingPaymentId, setConfirmingPaymentId] = useState<number | null>(null)
+  const [confirmingPaymentName, setConfirmingPaymentName] = useState<string>('')
 
   // Filtered payments based on search and status filter
   const filteredPayments = useMemo(() => {
@@ -62,11 +69,21 @@ export default function AdminPaymentsIndex() {
       .reduce((sum, p) => sum + p.amount, 0),
   }
 
-  function updateStatus(id: number, status: PaymentRow['status']) {
+  function updateStatus(id: number, status: PaymentRow['status'], attendeeName?: string) {
+    // Show progress dialog for confirmation
+    if (status === 'confirmed') {
+      setIsConfirming(true)
+      setConfirmingPaymentId(id)
+      setConfirmingPaymentName(attendeeName || 'Unknown')
+    }
+
     router.put(route('admin.payments.update', id), { status }, {
       preserveScroll: true,
       onSuccess: () => {
         if (status === 'confirmed') {
+          setIsConfirming(false)
+          setConfirmingPaymentId(null)
+          setConfirmingPaymentName('')
           toast({ 
             title: 'Payment Confirmed!', 
             description: 'Email and WhatsApp notifications have been sent to the attendee.',
@@ -81,6 +98,9 @@ export default function AdminPaymentsIndex() {
         }
       },
       onError: () => {
+        setIsConfirming(false)
+        setConfirmingPaymentId(null)
+        setConfirmingPaymentName('')
         toast({ 
           title: 'Error', 
           description: 'Failed to update payment status. Please try again.',
@@ -359,6 +379,9 @@ export default function AdminPaymentsIndex() {
                   <TableCell className="font-medium">
                     <div>
                       <div className="font-medium">{p.attendee_name ?? '-'}</div>
+                      <div className="text-xs text-blue-600 dark:text-blue-400 font-semibold mt-1">
+                        {p.ticket_type}
+                      </div>
                       {p.attendee_phone && (
                         <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                           {p.attendee_phone}
@@ -398,7 +421,7 @@ export default function AdminPaymentsIndex() {
                         <>
                           <Button 
                             size="sm" 
-                            onClick={() => updateStatus(p.id, 'confirmed')}
+                            onClick={() => updateStatus(p.id, 'confirmed', p.attendee_name || 'Unknown')}
                             className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-1"
                           >
                             <CheckCircle className="h-3 w-3" />
@@ -418,7 +441,7 @@ export default function AdminPaymentsIndex() {
                       {p.status === 'failed' && (
                         <Button 
                           size="sm" 
-                          onClick={() => updateStatus(p.id, 'confirmed')}
+                          onClick={() => updateStatus(p.id, 'confirmed', p.attendee_name || 'Unknown')}
                           className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-1"
                         >
                           <CheckCircle className="h-3 w-3" />
@@ -478,6 +501,43 @@ export default function AdminPaymentsIndex() {
           </div>
         </div>
       </div>
+
+      {/* Progress Dialog */}
+      <Dialog open={isConfirming} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Confirming Payment
+            </DialogTitle>
+            <DialogDescription>
+              Please wait while we confirm the payment and send notifications...
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                  <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  Processing payment for {confirmingPaymentName}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Sending email and WhatsApp notifications...
+                </p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div className="bg-green-600 h-2 rounded-full animate-pulse" style={{ width: '100%' }}></div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   )
 }

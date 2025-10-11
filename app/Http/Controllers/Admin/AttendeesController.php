@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AttendeesController extends Controller
 {
@@ -28,15 +29,26 @@ class AttendeesController extends Controller
             $attendees = Attendee::query()
                 ->with(['payments' => function ($q) {
                     $q->select('id', 'attendee_id', 'amount', 'status');
-                }])
+                }, 'groupTicket:id,total_amount', 'payment:id,amount,status'])
                 ->where('event_id', $event->id)
                 ->orderBy('name')
-                ->get(['id', 'event_id', 'name', 'email', 'whatsapp', 'gender', 'is_olqp_member']);
+                ->get(['id', 'event_id', 'name', 'email', 'whatsapp', 'gender', 'is_olqp_member', 'group_ticket_id', 'payment_id']);
         }
 
         $attendees = $attendees->map(function (Attendee $a) use ($event) {
-            $total = (float) ($a->payments->sum('amount'));
-            $status = $a->payments->last()?->status ?? 'pending';
+            // For group attendees, use their linked payment amount
+            if ($a->group_ticket_id && $a->payment_id) {
+                $total = (float) ($a->payment?->amount ?? 0);
+                $status = $a->payment?->status ?? 'pending';
+            } else {
+                // For individual attendees, sum their payments
+                $total = (float) ($a->payments->sum('amount'));
+                $status = $a->payments->last()?->status ?? 'pending';
+            }
+            
+            // Determine ticket type
+            $ticketType = $a->group_ticket_id ? 'Group-of-5' : 'Individual';
+            
             return [
                 'id' => $a->id,
                 'name' => $a->name,
@@ -46,6 +58,7 @@ class AttendeesController extends Controller
                 'is_olqp_member' => $a->is_olqp_member,
                 'total_amount' => $total,
                 'status' => $status,
+                'ticket_type' => $ticketType,
                 'event_name' => $event?->name,
             ];
         });
@@ -137,18 +150,18 @@ class AttendeesController extends Controller
     public function resendTicket(Attendee $attendee): RedirectResponse
     {
         try {
-            // Load attendee with payments and event
-            $attendee = $attendee->load(['payments', 'event']);
+            // Load attendee with payments, event, and group ticket
+            $attendee = $attendee->load(['payments', 'event', 'groupTicket']);
             
-            // Calculate total confirmed payments
+            // Check if attendee is fully paid using the model method
+            if (!$attendee->isFullyPaid()) {
+                return back()->with('error', 'Ticket can only be resent to fully paid attendees.');
+            }
+            
+            // Calculate total confirmed payments for display
             $totalConfirmedAmount = $attendee->payments
                 ->where('status', 'confirmed')
                 ->sum('amount');
-            
-            // Check if attendee is fully paid (4,999 and above)
-            if ($totalConfirmedAmount < 4999) {
-                return back()->with('error', 'Ticket can only be resent to fully paid attendees (Ksh. 4,999 and above).');
-            }
             
             // Get the latest confirmed payment
             $latestPayment = $attendee->payments
@@ -160,17 +173,51 @@ class AttendeesController extends Controller
                 return back()->with('error', 'No confirmed payment found for this attendee.');
             }
             
-            // Send the ticket email
-            Mail::to($attendee->email)->send(new PaymentConfirmedMail($latestPayment));
-            
-            Log::info('Ticket resent successfully', [
-                'attendee_id' => $attendee->id,
-                'attendee_name' => $attendee->name,
-                'attendee_email' => $attendee->email,
-                'total_confirmed' => $totalConfirmedAmount
-            ]);
-            
-            return back()->with('success', 'Event ticket resent successfully to ' . $attendee->email);
+            // Check if this is a group ticket
+            if ($attendee->group_ticket_id && $attendee->payment_id) {
+                // This is a group ticket - send to all group members
+                $groupAttendees = Attendee::where('payment_id', $attendee->payment_id)->get();
+                
+                $successCount = 0;
+                $errorCount = 0;
+                
+                foreach ($groupAttendees as $groupAttendee) {
+                    try {
+                        Mail::to($groupAttendee->email)->send(new PaymentConfirmedMail($latestPayment, $groupAttendee));
+                        $successCount++;
+                    } catch (\Exception $e) {
+                        $errorCount++;
+                        Log::error('Failed to resend group ticket to attendee', [
+                            'attendee_id' => $groupAttendee->id,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
+                
+                Log::info('Group tickets resent successfully', [
+                    'group_size' => $groupAttendees->count(),
+                    'successful' => $successCount,
+                    'failed' => $errorCount
+                ]);
+                
+                if ($errorCount > 0) {
+                    return back()->with('warning', "Group tickets resent to {$successCount} attendees. {$errorCount} failed to send.");
+                }
+                
+                return back()->with('success', "Group tickets resent successfully to {$successCount} attendees.");
+            } else {
+                // This is an individual ticket
+                Mail::to($attendee->email)->send(new PaymentConfirmedMail($latestPayment, $attendee));
+                
+                Log::info('Individual ticket resent successfully', [
+                    'attendee_id' => $attendee->id,
+                    'attendee_name' => $attendee->name,
+                    'attendee_email' => $attendee->email,
+                    'total_confirmed' => $totalConfirmedAmount
+                ]);
+                
+                return back()->with('success', 'Event ticket resent successfully to ' . $attendee->email);
+            }
             
         } catch (\Exception $e) {
             Log::error('Failed to resend ticket', [
@@ -251,8 +298,7 @@ class AttendeesController extends Controller
                 ->get();
 
             $partiallyPaidAttendees = $attendees->filter(function ($attendee) {
-                $totalPaid = $attendee->payments->where('status', 'confirmed')->sum('amount');
-                return $totalPaid < 4999;
+                return !$attendee->isFullyPaid();
             });
 
             if ($partiallyPaidAttendees->isEmpty()) {
@@ -325,8 +371,7 @@ class AttendeesController extends Controller
                 ->get();
 
             $fullyPaidAttendees = $attendees->filter(function ($attendee) {
-                $totalPaid = $attendee->payments->where('status', 'confirmed')->sum('amount');
-                return $totalPaid >= 4999;
+                return $attendee->isFullyPaid();
             });
 
             if ($fullyPaidAttendees->isEmpty()) {
@@ -336,6 +381,9 @@ class AttendeesController extends Controller
             $successCount = 0;
             $errorCount = 0;
 
+            // Track processed group payments to avoid duplicates
+            $processedGroupPayments = [];
+            
             foreach ($fullyPaidAttendees as $attendee) {
                 try {
                     $latestPayment = $attendee->payments
@@ -343,15 +391,51 @@ class AttendeesController extends Controller
                         ->sortByDesc('created_at')
                         ->first();
 
-                    if ($latestPayment) {
-                        Mail::to($attendee->email)->send(new PaymentConfirmedMail($latestPayment));
-                        $successCount++;
-                    } else {
+                    if (!$latestPayment) {
                         $errorCount++;
                         Log::warning('No confirmed payment found for fully paid attendee', [
                             'attendee_id' => $attendee->id
                         ]);
+                        continue;
                     }
+                    
+                    // Check if this is a group ticket
+                    if ($attendee->group_ticket_id && $attendee->payment_id) {
+                        // Skip if we've already processed this group payment
+                        if (in_array($attendee->payment_id, $processedGroupPayments)) {
+                            continue;
+                        }
+                        
+                        // Mark this group payment as processed
+                        $processedGroupPayments[] = $attendee->payment_id;
+                        
+                        // Send to all group members
+                        $groupAttendees = Attendee::where('payment_id', $attendee->payment_id)->get();
+                        $groupSuccessCount = 0;
+                        $groupErrorCount = 0;
+                        
+                        foreach ($groupAttendees as $groupAttendee) {
+                            try {
+                                Mail::to($groupAttendee->email)->send(new PaymentConfirmedMail($latestPayment, $groupAttendee));
+                                $groupSuccessCount++;
+                            } catch (\Exception $e) {
+                                $groupErrorCount++;
+                                Log::error('Failed to resend group ticket to attendee', [
+                                    'attendee_id' => $groupAttendee->id,
+                                    'error' => $e->getMessage()
+                                ]);
+                            }
+                        }
+                        
+                        $successCount += $groupSuccessCount;
+                        $errorCount += $groupErrorCount;
+                        
+                    } else {
+                        // Individual ticket
+                        Mail::to($attendee->email)->send(new PaymentConfirmedMail($latestPayment, $attendee));
+                        $successCount++;
+                    }
+                    
                 } catch (\Exception $e) {
                     $errorCount++;
                     Log::error('Failed to resend ticket to attendee', [
@@ -381,5 +465,156 @@ class AttendeesController extends Controller
 
             return back()->with('error', 'Failed to resend bulk tickets. Please try again.');
         }
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $event = Event::query()->orderBy('date')->first();
+
+        $attendees = collect();
+        if ($event) {
+            $attendees = Attendee::query()
+                ->with(['payments' => function ($q) {
+                    $q->select('id', 'attendee_id', 'amount', 'status');
+                }, 'groupTicket:id,total_amount', 'payment:id,amount,status'])
+                ->where('event_id', $event->id)
+                ->orderBy('name')
+                ->get(['id', 'event_id', 'name', 'email', 'whatsapp', 'gender', 'is_olqp_member', 'group_ticket_id', 'payment_id']);
+        }
+
+        $attendees = $attendees->map(function (Attendee $a) use ($event) {
+            // For group attendees, use their linked payment amount
+            if ($a->group_ticket_id && $a->payment_id) {
+                $total = (float) ($a->payment?->amount ?? 0);
+                $status = $a->payment?->status ?? 'pending';
+            } else {
+                // For individual attendees, sum their payments
+                $total = (float) ($a->payments->sum('amount'));
+                $status = $a->payments->last()?->status ?? 'pending';
+            }
+            
+            // Determine ticket type
+            $ticketType = $a->group_ticket_id ? 'Group-of-5' : 'Individual';
+            
+            return [
+                'id' => $a->id,
+                'name' => $a->name,
+                'email' => $a->email,
+                'whatsapp' => $a->whatsapp,
+                'gender' => $a->gender,
+                'is_olqp_member' => $a->is_olqp_member,
+                'total_amount' => $total,
+                'status' => $status,
+                'ticket_type' => $ticketType,
+                'event_name' => $event?->name,
+                'payment_id' => $a->payment_id, // Add payment_id for revenue calculation
+            ];
+        });
+
+        // Calculate total revenue correctly - avoid duplicating group ticket amounts
+        $totalRevenue = 0;
+        $processedGroupPayments = [];
+        
+        foreach($attendees as $attendee) {
+            if($attendee['ticket_type'] === 'Group-of-5' && $attendee['payment_id']) {
+                // For group tickets, only count the amount once per unique payment_id
+                if(!in_array($attendee['payment_id'], $processedGroupPayments)) {
+                    $totalRevenue += $attendee['total_amount'];
+                    $processedGroupPayments[] = $attendee['payment_id'];
+                }
+            } else {
+                // For individual tickets, count normally
+                $totalRevenue += $attendee['total_amount'];
+            }
+        }
+
+        $data = [
+            'attendees' => $attendees,
+            'event' => $event,
+            'exported_at' => now()->format('Y-m-d H:i:s'),
+            'total_revenue' => $totalRevenue,
+        ];
+
+        $pdf = Pdf::loadView('pdfs.attendees-export', $data);
+        return $pdf->download('attendees-export-' . now()->format('Y-m-d-H-i-s') . '.pdf');
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $event = Event::query()->orderBy('date')->first();
+
+        $attendees = collect();
+        if ($event) {
+            $attendees = Attendee::query()
+                ->with(['payments' => function ($q) {
+                    $q->select('id', 'attendee_id', 'amount', 'status');
+                }, 'groupTicket:id,total_amount', 'payment:id,amount,status'])
+                ->where('event_id', $event->id)
+                ->orderBy('name')
+                ->get(['id', 'event_id', 'name', 'email', 'whatsapp', 'gender', 'is_olqp_member', 'group_ticket_id', 'payment_id']);
+        }
+
+        $data = $attendees->map(function (Attendee $a) use ($event) {
+            // For group attendees, use their linked payment amount
+            if ($a->group_ticket_id && $a->payment_id) {
+                $total = (float) ($a->payment?->amount ?? 0);
+                $status = $a->payment?->status ?? 'pending';
+            } else {
+                // For individual attendees, sum their payments
+                $total = (float) ($a->payments->sum('amount'));
+                $status = $a->payments->last()?->status ?? 'pending';
+            }
+            
+            // Determine ticket type
+            $ticketType = $a->group_ticket_id ? 'Group-of-5' : 'Individual';
+            
+            return [
+                'ID' => $a->id,
+                'Name' => $a->name,
+                'Email' => $a->email,
+                'WhatsApp' => $a->whatsapp,
+                'Gender' => $a->gender ?? 'Not specified',
+                'OLQP Member' => $a->is_olqp_member ? 'Yes' : 'No',
+                'Ticket Type' => $ticketType,
+                'Total Amount' => $total,
+                'Payment Status' => ucfirst($status),
+                'Event' => $event?->name ?? 'N/A',
+                'Payment ID' => $a->payment_id, // Add payment_id for reference
+            ];
+        });
+
+        $csvContent = $this->generateCsvContent($data);
+        
+        return response($csvContent)
+            ->header('Content-Type', 'text/csv')
+            ->header('Content-Disposition', 'attachment; filename="attendees-export-' . now()->format('Y-m-d-H-i-s') . '.csv"');
+    }
+
+    private function generateCsvContent($data)
+    {
+        if (empty($data)) {
+            return "No data available\n";
+        }
+
+        // Get headers from the first row
+        $headers = array_keys($data[0]);
+        
+        // Start output buffering
+        $output = fopen('php://temp', 'r+');
+        
+        // Write headers
+        fputcsv($output, $headers);
+        
+        // Write data rows
+        foreach ($data as $row) {
+            fputcsv($output, array_values($row));
+        }
+        
+        // Get the content
+        rewind($output);
+        $csvContent = stream_get_contents($output);
+        fclose($output);
+        
+        return $csvContent;
     }
 }

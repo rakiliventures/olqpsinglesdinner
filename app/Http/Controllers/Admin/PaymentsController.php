@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\PaymentConfirmedMail;
 use App\Models\Event;
 use App\Models\Payment;
+use App\Models\Attendee;
 use App\Services\WhatsAppService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,7 +31,7 @@ class PaymentsController extends Controller
         $event = Event::query()->orderBy('date')->first();
 
         $query = Payment::query()
-            ->with(['attendee:id,name,event_id,email,whatsapp', 'attendee.event:id,name', 'actionedBy:id,name'])
+            ->with(['attendee:id,name,event_id,email,whatsapp,group_ticket_id', 'attendee.event:id,name', 'attendee.groupTicket:id,total_amount', 'actionedBy:id,name'])
             ->orderByDesc('created_at');
 
         if ($event) {
@@ -42,6 +43,9 @@ class PaymentsController extends Controller
         $payments = $query->get(['id', 'attendee_id', 'amount', 'mpesa_code', 'status', 'method', 'created_at', 'actioned_by', 'actioned_at']);
 
         $payments = $payments->map(function (Payment $p) {
+            // Determine ticket type
+            $ticketType = $p->attendee?->group_ticket_id ? 'Group-of-5' : 'Individual';
+            
             return [
                 'id' => $p->id,
                 'attendee_name' => $p->attendee?->name,
@@ -51,6 +55,7 @@ class PaymentsController extends Controller
                 'mpesa_code' => $p->mpesa_code,
                 'status' => $p->status,
                 'method' => $p->method,
+                'ticket_type' => $ticketType,
                 'created_at' => $p->created_at?->toDateTimeString(),
                 'actioned_by_name' => $p->actionedBy?->name,
                 'actioned_at' => $p->actioned_at?->toDateTimeString(),
@@ -120,12 +125,59 @@ class PaymentsController extends Controller
             }
 
             $attendee = $payment->attendee;
+            
+            // Check if this is a group payment
+            if ($attendee->group_ticket_id && $attendee->payment_id) {
+                // This is a group payment - send notifications to all group members
+                $this->sendGroupPaymentNotifications($payment);
+            } else {
+                // This is an individual payment - send notification to single attendee
+                $this->sendIndividualPaymentNotifications($payment);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Failed to send payment confirmation notifications', [
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+    }
+
+    protected function sendGroupPaymentNotifications(Payment $payment): void
+    {
+        try {
+            // Get all attendees in the group
+            $groupAttendees = Attendee::where('payment_id', $payment->id)->get();
+            
+            Log::info('Sending group payment notifications', [
+                'payment_id' => $payment->id,
+                'group_size' => $groupAttendees->count()
+            ]);
+
+            foreach ($groupAttendees as $attendee) {
+                $this->sendIndividualPaymentNotifications($payment, $attendee);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Failed to send group payment notifications', [
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+    }
+
+    protected function sendIndividualPaymentNotifications(Payment $payment, ?Attendee $attendee = null): void
+    {
+        try {
+            $attendee = $attendee ?? $payment->attendee;
             $notificationsSent = [];
 
             // Send email notification
             if ($attendee->email) {
                 try {
-                    Mail::to($attendee->email)->send(new PaymentConfirmedMail($payment));
+                    Mail::to($attendee->email)->send(new PaymentConfirmedMail($payment, $attendee));
                     $notificationsSent[] = 'email';
                     Log::info('Payment confirmation email sent', [
                         'payment_id' => $payment->id,
@@ -151,7 +203,7 @@ class PaymentsController extends Controller
             // Send WhatsApp notification
             if ($attendee->whatsapp) {
                 try {
-                    $whatsappSent = $this->whatsappService->sendPaymentConfirmation($payment);
+                    $whatsappSent = $this->whatsappService->sendPaymentConfirmation($payment, $attendee);
                     if ($whatsappSent) {
                         $notificationsSent[] = 'whatsapp';
                         Log::info('Payment confirmation WhatsApp message sent', [
@@ -209,7 +261,7 @@ class PaymentsController extends Controller
         $status = $request->get('status', 'all');
 
         $query = Payment::query()
-            ->with(['attendee:id,name,event_id,email,whatsapp', 'attendee.event:id,name', 'actionedBy:id,name'])
+            ->with(['attendee:id,name,event_id,email,whatsapp,group_ticket_id', 'attendee.event:id,name', 'actionedBy:id,name'])
             ->orderByDesc('created_at');
 
         // Apply search filter
@@ -244,7 +296,7 @@ class PaymentsController extends Controller
         $status = $request->get('status', 'all');
 
         $query = Payment::query()
-            ->with(['attendee:id,name,event_id,email,whatsapp', 'attendee.event:id,name', 'actionedBy:id,name'])
+            ->with(['attendee:id,name,event_id,email,whatsapp,group_ticket_id', 'attendee.event:id,name', 'actionedBy:id,name'])
             ->orderByDesc('created_at');
 
         // Apply search filter
@@ -263,11 +315,14 @@ class PaymentsController extends Controller
         $payments = $query->get();
 
         $data = $payments->map(function (Payment $p) {
+            // Determine ticket type
+            $ticketType = $p->attendee?->group_ticket_id ? 'Group-of-5' : 'Individual';
+            
             return [
                 'ID' => $p->id,
                 'Attendee Name' => $p->attendee?->name ?? '-',
                 'Phone Number' => $p->attendee?->whatsapp ?? '-',
-                'Event' => $p->attendee?->event?->name ?? '-',
+                'Ticket Type' => $ticketType,
                 'Amount' => $p->amount,
                 'M-Pesa Code' => $p->mpesa_code,
                 'Status' => ucfirst($p->status),

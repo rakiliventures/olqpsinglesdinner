@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useToast } from '@/components/ui/toast'
 import { Head, useForm, usePage } from '@inertiajs/react'
-import { PencilIcon, PlusIcon, Trash2Icon, MailIcon, BellIcon, UsersIcon, TicketIcon } from 'lucide-react'
+import { PencilIcon, PlusIcon, Trash2Icon, MailIcon, BellIcon, UsersIcon, TicketIcon, Download, FileText, Table as TableIcon, Search, Loader2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 type AttendeeRow = {
@@ -19,6 +19,7 @@ type AttendeeRow = {
   gender: string | null
   is_olqp_member: boolean
   total_amount: number
+  ticket_type: string
   event_name?: string | null
 }
 
@@ -33,6 +34,34 @@ export default function AdminAttendeesIndex() {
   const attendees = props.attendees || []
   const eventAmount = props.event?.amount ?? 0
 
+  // Search state
+  const [searchTerm, setSearchTerm] = useState('')
+
+  // Progress dialog state
+  const [isResendingTicket, setIsResendingTicket] = useState(false)
+  const [resendingTicketId, setResendingTicketId] = useState<number | null>(null)
+  const [resendingTicketName, setResendingTicketName] = useState<string>('')
+  
+  // Bulk action progress dialogs
+  const [isBulkResendingTickets, setIsBulkResendingTickets] = useState(false)
+  const [isBulkSendingReminders, setIsBulkSendingReminders] = useState(false)
+
+  // Filter attendees based on search term
+  const filteredAttendees = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return attendees
+    }
+    
+    const term = searchTerm.toLowerCase()
+    return attendees.filter(attendee => 
+      attendee.name.toLowerCase().includes(term) ||
+      attendee.email.toLowerCase().includes(term) ||
+      attendee.whatsapp.toLowerCase().includes(term) ||
+      attendee.ticket_type.toLowerCase().includes(term) ||
+      (attendee.gender && attendee.gender.toLowerCase().includes(term))
+    )
+  }, [attendees, searchTerm])
+
   const deleteForm = useForm({})
   const resendTicketForm = useForm({})
   const sendReminderForm = useForm({})
@@ -46,11 +75,26 @@ export default function AdminAttendeesIndex() {
     })
   }
 
-  function resendTicket(id: number) {
+  function resendTicket(id: number, attendeeName?: string) {
+    // Show progress dialog
+    setIsResendingTicket(true)
+    setResendingTicketId(id)
+    setResendingTicketName(attendeeName || 'Unknown')
+
     resendTicketForm.post(route('admin.attendees.resend-ticket', id), {
       preserveScroll: true,
-      onSuccess: () => toast({ title: 'Ticket resent successfully' }),
-      onError: () => toast({ title: 'Failed to resend ticket', variant: 'destructive' }),
+      onSuccess: () => {
+        setIsResendingTicket(false)
+        setResendingTicketId(null)
+        setResendingTicketName('')
+        toast({ title: 'Ticket resent successfully' })
+      },
+      onError: () => {
+        setIsResendingTicket(false)
+        setResendingTicketId(null)
+        setResendingTicketName('')
+        toast({ title: 'Failed to resend ticket', variant: 'destructive' })
+      },
     })
   }
 
@@ -63,18 +107,36 @@ export default function AdminAttendeesIndex() {
   }
 
   function bulkSendReminders() {
+    // Show progress dialog
+    setIsBulkSendingReminders(true)
+
     bulkSendRemindersForm.post(route('admin.attendees.bulk-send-reminders'), {
       preserveScroll: true,
-      onSuccess: () => toast({ title: 'Bulk reminders sent successfully' }),
-      onError: () => toast({ title: 'Failed to send bulk reminders', variant: 'destructive' }),
+      onSuccess: () => {
+        setIsBulkSendingReminders(false)
+        toast({ title: 'Bulk reminders sent successfully' })
+      },
+      onError: () => {
+        setIsBulkSendingReminders(false)
+        toast({ title: 'Failed to send bulk reminders', variant: 'destructive' })
+      },
     })
   }
 
   function bulkResendTickets() {
+    // Show progress dialog
+    setIsBulkResendingTickets(true)
+
     bulkResendTicketsForm.post(route('admin.attendees.bulk-resend-tickets'), {
       preserveScroll: true,
-      onSuccess: () => toast({ title: 'Bulk tickets resent successfully' }),
-      onError: () => toast({ title: 'Failed to resend bulk tickets', variant: 'destructive' }),
+      onSuccess: () => {
+        setIsBulkResendingTickets(false)
+        toast({ title: 'Bulk tickets resent successfully' })
+      },
+      onError: () => {
+        setIsBulkResendingTickets(false)
+        toast({ title: 'Failed to resend bulk tickets', variant: 'destructive' })
+      },
     })
   }
 
@@ -96,18 +158,53 @@ export default function AdminAttendeesIndex() {
             )}
           </div>
           <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => window.open(route('admin.attendees.export-pdf'), '_blank')}
+              className="flex items-center gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              Export PDF
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => window.open(route('admin.attendees.export-excel'), '_blank')}
+              className="flex items-center gap-2"
+            >
+              <TableIcon className="h-4 w-4" />
+              Export CSV
+            </Button>
             <BulkSendRemindersButton 
               onBulkSendReminders={bulkSendReminders}
               processing={bulkSendRemindersForm.processing}
-              attendees={attendees}
+              attendees={filteredAttendees}
             />
             <BulkResendTicketsButton 
               onBulkResendTickets={bulkResendTickets}
               processing={bulkResendTicketsForm.processing}
-              attendees={attendees}
+              attendees={filteredAttendees}
             />
             <CreateAttendeeModal />
           </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="mb-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              type="text"
+              placeholder="Search attendees by name, email, WhatsApp, ticket type, or gender..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          {searchTerm && (
+            <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              Showing {filteredAttendees.length} of {attendees.length} attendees
+            </div>
+          )}
         </div>
 
         <div className="rounded-lg border border-black/10 dark:border-white/10">
@@ -125,20 +222,23 @@ export default function AdminAttendeesIndex() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {attendees.length === 0 && (
+              {filteredAttendees.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={8} className="text-sm text-neutral-600 dark:text-neutral-400">
-                    No attendees found.
+                    {searchTerm ? 'No attendees found matching your search.' : 'No attendees found.'}
                   </TableCell>
                 </TableRow>
               )}
-              {attendees.map((a) => (
+              {filteredAttendees.map((a) => (
                 <TableRow key={a.id}>
                   <TableCell>
                     <div className="font-mono font-medium text-sm">#{a.id}</div>
                   </TableCell>
                   <TableCell>
                     <div className="font-medium">{a.name}</div>
+                    <div className="text-xs text-blue-600 dark:text-blue-400 font-semibold mt-1">
+                      {a.ticket_type}
+                    </div>
                     {a.gender && <div className="text-xs text-neutral-600 dark:text-neutral-400">{a.gender}</div>}
                   </TableCell>
                   <TableCell>{a.email}</TableCell>
@@ -152,7 +252,7 @@ export default function AdminAttendeesIndex() {
                       <ResendTicketButton 
                         attendeeId={a.id} 
                         attendeeName={a.name}
-                        onResend={resendTicket}
+                        onResend={(id) => resendTicket(id, a.name)}
                         processing={resendTicketForm.processing}
                       />
                     )}
@@ -173,6 +273,108 @@ export default function AdminAttendeesIndex() {
             </TableBody>
           </Table>
         </div>
+
+        {/* Progress Dialog for Resend Ticket */}
+        <Dialog open={isResendingTicket} onOpenChange={() => {}}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Resending Ticket
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                    <MailIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    Sending ticket to {resendingTicketName}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Generating PDF and sending email...
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4">
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div className="bg-blue-600 h-2 rounded-full animate-pulse" style={{ width: '100%' }}></div>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Progress Dialog for Bulk Resend Tickets */}
+        <Dialog open={isBulkResendingTickets} onOpenChange={() => {}}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Resending Bulk Tickets
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                    <TicketIcon className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    Processing bulk ticket resend
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Generating PDFs and sending emails to all fully paid attendees...
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4">
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div className="bg-green-600 h-2 rounded-full animate-pulse" style={{ width: '100%' }}></div>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Progress Dialog for Bulk Send Reminders */}
+        <Dialog open={isBulkSendingReminders} onOpenChange={() => {}}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Sending Bulk Reminders
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
+                    <BellIcon className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    Processing bulk reminders
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Sending payment reminders to all partially paid attendees...
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4">
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div className="bg-yellow-600 h-2 rounded-full animate-pulse" style={{ width: '100%' }}></div>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   )

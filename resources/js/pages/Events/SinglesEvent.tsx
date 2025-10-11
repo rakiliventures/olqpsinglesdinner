@@ -3,6 +3,7 @@ import { CalendarIcon, HeartIcon, WineIcon, UtensilsIcon, MapPinIcon, ClockIcon,
 import CountdownTimer from '@/components/countdown-timer'
 import PurchaseTicketDialog from '@/components/events/purchase-ticket-dialog'
 import ManageTicketDialog from '@/components/events/manage-ticket-dialog'
+import GroupTicketDialog from '@/components/events/group-ticket-dialog'
 
 export default function SinglesEvent() {
   return (
@@ -138,7 +139,7 @@ export default function SinglesEvent() {
                   </div>
 
                   {/* Masquerade Action Buttons */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                     <div className="text-center group">
                       <div className="flex items-center justify-center gap-1 sm:gap-2 mb-1 sm:mb-2">
                         <UserCheckIcon className="size-2.5 sm:size-3 text-yellow-500" />
@@ -159,6 +160,17 @@ export default function SinglesEvent() {
                       </div>
                       <div className="transform group-hover:scale-105 transition-transform duration-300">
                         <ManageTicketDialog />
+                      </div>
+                    </div>
+                    <div className="text-center group sm:col-span-2 lg:col-span-1">
+                      <div className="flex items-center justify-center gap-1 sm:gap-2 mb-1 sm:mb-2">
+                        <UsersIcon className="size-2.5 sm:size-3 text-green-500" />
+                        <p className="text-green-400 text-xs font-bold uppercase tracking-widest group-hover:text-green-300 transition-colors duration-300">
+                          GROUP TICKET (5 PAX)
+                        </p>
+                      </div>
+                      <div className="transform group-hover:scale-105 transition-transform duration-300">
+                        <GroupTicketDialog />
                       </div>
                     </div>
                   </div>

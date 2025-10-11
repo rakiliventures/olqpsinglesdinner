@@ -277,6 +277,10 @@
                     <span class="detail-value">{{ $attendee->id }}</span>
                 </div>
                 <div class="detail-row">
+                    <span class="detail-label">Ticket Type:</span>
+                    <span class="detail-value">{{ $ticketType }}</span>
+                </div>
+                <div class="detail-row">
                     <span class="detail-label">Amount Confirmed:</span>
                     <span class="detail-value amount">Ksh. {{ number_format($payment->amount) }}</span>
                 </div>
