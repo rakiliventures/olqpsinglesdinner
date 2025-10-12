@@ -104,7 +104,7 @@ export default function SinglesEvent() {
 
                   {/* Masquerade Story */}
                   <div className="text-center px-2">
-                    <p className="text-white text-base sm:text-lg md:text-xl leading-relaxed font-medium">
+                    <p className="text-gray-200 text-sm sm:text-base md:text-lg leading-relaxed font-normal">
                       Come enjoy a wonderful evening of fun, networking and great experiences
                     </p>
                   </div>
@@ -115,7 +115,7 @@ export default function SinglesEvent() {
                   <div className="text-center mb-3 sm:mb-4">
                     <div className="flex items-center justify-center gap-1 sm:gap-2 mb-2">
                       <GemIcon className="size-3 sm:size-4 text-yellow-500 animate-pulse" />
-                      <h3 className="text-white font-bold text-sm sm:text-base md:text-lg tracking-wide">Your Invitation to the Masquerade</h3>
+                      <h3 className="text-gray-200 font-medium text-xs sm:text-sm md:text-base tracking-wide">Your Invitation to the Masquerade</h3>
                       <GemIcon className="size-3 sm:size-4 text-yellow-500 animate-pulse" />
                     </div>
                     
