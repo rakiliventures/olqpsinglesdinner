@@ -95,7 +95,7 @@ export default function SinglesEvent() {
                     
                     <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6 px-2">
                       <div className="h-px bg-gradient-to-r from-transparent via-yellow-500 to-transparent flex-1"></div>
-                      <div className="bg-gradient-to-r from-yellow-500/20 to-amber-500/20 backdrop-blur-sm rounded-full px-3 sm:px-4 py-1.5 sm:py-2 border border-yellow-500/40">
+                      <div className="bg-gradient-to-r from-yellow-500/20 to-amber-500/20 backdrop-blur-sm rounded-full px-3 sm:px-4 py-1.5 sm:py-2 border border-yellow-500/40 opacity-80">
                         <p className="text-yellow-500 text-xs sm:text-sm md:text-base font-bold tracking-widest uppercase">At The Boma Hotel, South C</p>
                       </div>
                       <div className="h-px bg-gradient-to-r from-transparent via-yellow-500 to-transparent flex-1"></div>
@@ -146,7 +146,7 @@ export default function SinglesEvent() {
                           <div className="text-lg sm:text-xl md:text-2xl font-black text-green-500 mb-1">Ksh. 22,500</div>
                           <div className="text-green-300/90 text-xs sm:text-sm font-semibold">Ksh. 4,500 per person</div>
                           <p className="text-green-300/70 text-xs mt-1 italic">
-                            Must be paid in full
+                            Only when paid in full
                           </p>
                         </div>
                       </div>
