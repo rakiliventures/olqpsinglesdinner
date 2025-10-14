@@ -26,8 +26,8 @@ class NewPaymentNotificationMail extends Mailable
         
         return new Envelope(
             subject: "Dinner New Payment - {$attendeeName}",
-            to: ['mashetin.91@gmail.com'],
-            cc: ['mobiwecraft@gmail.com'],
+            to: ['dekkerwilliam20@gmail.com'],
+            cc: ['olqpsouthbsecretary@gmail.com'],
         );
     }
 
