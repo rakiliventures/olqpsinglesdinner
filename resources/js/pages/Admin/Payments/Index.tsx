@@ -6,7 +6,7 @@ import { useToast } from '@/components/ui/toast'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Head, usePage, router } from '@inertiajs/react'
 import { useState, useMemo } from 'react'
-import { CheckCircle, AlertCircle, Mail, MessageCircle, User, Trash2, CreditCard, TrendingUp, XCircle, Clock, Search, Download, FileText, Table as TableIcon, Loader2 } from 'lucide-react'
+import { CheckCircle, AlertCircle, Mail, MessageCircle, User, Trash2, CreditCard, TrendingUp, XCircle, Clock, Search, Download, FileText, Table as TableIcon, Loader2, Send } from 'lucide-react'
 
  type PaymentRow = {
   id: number
@@ -41,6 +41,11 @@ export default function AdminPaymentsIndex() {
   const [isConfirming, setIsConfirming] = useState(false)
   const [confirmingPaymentId, setConfirmingPaymentId] = useState<number | null>(null)
   const [confirmingPaymentName, setConfirmingPaymentName] = useState<string>('')
+  
+  // Resend notification state
+  const [isResending, setIsResending] = useState(false)
+  const [resendingPaymentId, setResendingPaymentId] = useState<number | null>(null)
+  const [resendingPaymentName, setResendingPaymentName] = useState<string>('')
 
   // Filtered payments based on search and status filter
   const filteredPayments = useMemo(() => {
@@ -81,7 +86,7 @@ export default function AdminPaymentsIndex() {
       preserveScroll: true,
       onSuccess: () => {
         if (status === 'confirmed') {
-          // Add minimum delay of 5 seconds for better UX
+          // Add minimum delay of 3 seconds for better UX
           setTimeout(() => {
             setIsConfirming(false)
             setConfirmingPaymentId(null)
@@ -91,7 +96,7 @@ export default function AdminPaymentsIndex() {
               description: 'Payment has been confirmed successfully. Notifications will be sent in the background.',
               variant: 'default',
             })
-          }, 5000)
+          }, 3000)
         } else {
           toast({ 
             title: 'Payment Updated', 
@@ -133,6 +138,34 @@ export default function AdminPaymentsIndex() {
         }
       })
     }
+  }
+
+  function resendNotification(id: number, attendeeName?: string) {
+    setResendingPaymentId(id)
+    setResendingPaymentName(attendeeName || 'Unknown')
+    setIsResending(true)
+
+    router.post(route('admin.payments.resend-notification', id), {}, {
+      onSuccess: () => {
+        setIsResending(false)
+        setResendingPaymentId(null)
+        setResendingPaymentName('')
+        toast({
+          title: 'Success',
+          description: 'Notification resent successfully.',
+        })
+      },
+      onError: () => {
+        setIsResending(false)
+        setResendingPaymentId(null)
+        setResendingPaymentName('')
+        toast({
+          title: 'Error',
+          description: 'Failed to resend notification. Please try again.',
+          variant: 'destructive',
+        })
+      },
+    })
   }
 
   function exportToPDF() {
@@ -452,13 +485,29 @@ export default function AdminPaymentsIndex() {
                         </Button>
                       )}
                       {p.status === 'confirmed' && (
-                        <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
-                          <CheckCircle className="h-4 w-4" />
-                          <span>Confirmed</span>
-                          <div className="flex gap-1">
-                            <Mail className="h-3 w-3" />
-                            <MessageCircle className="h-3 w-3" />
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                            <CheckCircle className="h-4 w-4" />
+                            <span>Confirmed</span>
+                            <div className="flex gap-1">
+                              <Mail className="h-3 w-3" />
+                              <MessageCircle className="h-3 w-3" />
+                            </div>
                           </div>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => resendNotification(p.id, p.attendee_name || undefined)}
+                            disabled={isResending && resendingPaymentId === p.id}
+                            className="border-blue-300 text-blue-700 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-950/30 ml-2"
+                          >
+                            {isResending && resendingPaymentId === p.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Send className="h-3 w-3" />
+                            )}
+                            Resend
+                          </Button>
                         </div>
                       )}
                       <Button 
@@ -536,6 +585,43 @@ export default function AdminPaymentsIndex() {
             <div className="mt-4">
               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                 <div className="bg-green-600 h-2 rounded-full animate-pulse" style={{ width: '100%' }}></div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Resend Notification Progress Dialog */}
+      <Dialog open={isResending} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Resending Notification
+            </DialogTitle>
+            <DialogDescription>
+              Please wait while we resend the notification...
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                  <Send className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  Resending notification to {resendingPaymentName}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Sending email and WhatsApp notification...
+                </p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div className="bg-blue-600 h-2 rounded-full animate-pulse" style={{ width: '100%' }}></div>
               </div>
             </div>
           </div>

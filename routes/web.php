@@ -32,6 +32,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('payments', [PaymentsController::class, 'store'])->name('admin.payments.store');
     Route::put('payments/{payment}', [PaymentsController::class, 'update'])->name('admin.payments.update');
     Route::delete('payments/{payment}', [PaymentsController::class, 'destroy'])->name('admin.payments.destroy');
+    Route::post('payments/{payment}/resend-notification', [PaymentsController::class, 'resendNotification'])->name('admin.payments.resend-notification');
     Route::get('payments/export/pdf', [PaymentsController::class, 'exportPdf'])->name('admin.payments.export.pdf');
     Route::get('payments/export/excel', [PaymentsController::class, 'exportExcel'])->name('admin.payments.export.excel');
 
@@ -45,6 +46,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 Route::get('/', [EventsController::class, 'singlesEvent'])
     ->name('singles-event');
+
+Route::get('/privacy-policy', function () {
+    return Inertia::render('PrivacyPolicy');
+})->name('privacy-policy');
+
+Route::get('/terms-of-service', function () {
+    return Inertia::render('TermsOfService');
+})->name('terms-of-service');
 
 Route::post('/singles-event/purchase-ticket', [EventsController::class, 'purchaseTicket'])
     ->name('singles-event.purchase-ticket');

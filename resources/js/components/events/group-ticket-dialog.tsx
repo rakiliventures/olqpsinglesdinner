@@ -281,7 +281,7 @@ export default function GroupTicketDialog({ eventId }: { eventId?: number }) {
                   value={form.data.amount}
                   onChange={(e) => form.setData('amount', e.target.value)}
                   placeholder="22500"
-                  className="text-lg font-semibold"
+                  className="text-lg font-semibold text-gray-900 dark:text-gray-100"
                 />
                 <InputError message={form.errors.amount} className="mt-1" />
               </div>

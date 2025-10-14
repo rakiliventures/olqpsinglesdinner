@@ -113,6 +113,35 @@ class PaymentsController extends Controller
         }
     }
 
+    public function resendNotification(Payment $payment): RedirectResponse
+    {
+        try {
+            // Only allow resending for confirmed payments
+            if ($payment->status !== 'confirmed') {
+                return back()->with('error', 'Only confirmed payments can have notifications resent.');
+            }
+
+            // Load the attendee and event relationships
+            $payment->load(['attendee.event']);
+
+            if (!$payment->attendee) {
+                return back()->with('error', 'No attendee found for this payment.');
+            }
+
+            // Resend notifications
+            $this->sendPaymentConfirmationNotifications($payment);
+
+            return back()->with('success', 'Notification resent successfully to ' . $payment->attendee->name . '.');
+        } catch (\Exception $e) {
+            Log::error('Failed to resend payment notification', [
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return back()->with('error', 'Failed to resend notification. Please try again.');
+        }
+    }
+
     protected function sendPaymentConfirmationNotifications(Payment $payment): void
     {
         try {
@@ -126,9 +155,16 @@ class PaymentsController extends Controller
 
             $attendee = $payment->attendee;
             
-            // For now, skip sending notifications to avoid timeout issues
-            // TODO: Implement proper queue-based notification system
-            Log::info('Payment confirmed - notifications skipped to avoid timeout', [
+            // Check if this is a group payment
+            if ($attendee->group_ticket_id) {
+                // For group payments, send notifications to all group members
+                $this->sendGroupPaymentNotifications($payment);
+            } else {
+                // For individual payments, send notification to the attendee
+                $this->sendIndividualPaymentNotifications($payment, $attendee);
+            }
+
+            Log::info('Payment confirmation notifications sent', [
                 'payment_id' => $payment->id,
                 'attendee_name' => $attendee->name,
                 'is_group' => $attendee->group_ticket_id ? true : false

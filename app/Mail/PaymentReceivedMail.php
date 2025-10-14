@@ -11,7 +11,7 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class NewPaymentNotificationMail extends Mailable
+class PaymentReceivedMail extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -22,12 +22,11 @@ class NewPaymentNotificationMail extends Mailable
 
     public function envelope(): Envelope
     {
-        $attendeeName = $this->attendee?->name ?? $this->payment->attendee?->name ?? 'Unknown';
+        $attendeeName = $this->attendee?->name ?? $this->payment->attendee?->name ?? 'Valued Guest';
         
         return new Envelope(
-            subject: "Dinner New Payment - {$attendeeName}",
-            to: ['dekkerwilliam20@gmail.com'],
-            cc: ['olqpsouthbsecretary@gmail.com'],
+            subject: "Payment Received - OLQP Singles Dinner 2025",
+            to: [$this->attendee?->email ?? $this->payment->attendee?->email],
         );
     }
 
@@ -37,7 +36,7 @@ class NewPaymentNotificationMail extends Mailable
         $ticketType = $attendee?->group_ticket_id ? 'Group-of-5' : 'Individual';
         
         return new Content(
-            view: 'emails.new-payment-notification',
+            view: 'emails.payment-received',
             with: [
                 'payment' => $this->payment,
                 'attendee' => $attendee,
