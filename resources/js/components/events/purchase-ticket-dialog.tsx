@@ -38,7 +38,7 @@ export default function PurchaseTicketDialog({ eventId }: { eventId?: number }) 
     whatsapp: '',
     mpesa_code: '',
     is_olqp_member: '', // will convert to boolean before submit
-    amount: '4999',
+    amount: '',
   })
 
   const numericAmount = useMemo(() => {
@@ -169,7 +169,6 @@ export default function PurchaseTicketDialog({ eventId }: { eventId?: number }) 
           })
           setOpen(false)
           form.reset('name', 'gender', 'email', 'whatsapp', 'mpesa_code', 'is_olqp_member', 'amount')
-          form.setData('amount', '4999')
         }, 100)
       },
       onError: () => {
@@ -316,7 +315,6 @@ export default function PurchaseTicketDialog({ eventId }: { eventId?: number }) 
               step={1}
               value={form.data.amount}
               onChange={(e) => form.setData('amount', e.target.value)}
-              placeholder="e.g. 4999"
               required
               aria-invalid={!!form.errors.amount || undefined}
               className="h-9 sm:h-10"
