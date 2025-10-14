@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\NewPaymentNotificationMail;
+use App\Mail\PaymentReceivedMail;
 use App\Models\Attendee;
 use App\Models\Event;
 use App\Models\GroupTicket;
@@ -93,6 +94,16 @@ class EventsController extends Controller
                 'status' => 'pending',
                 'method' => 'mpesa',
             ]);
+
+            // Send immediate payment received email to attendee
+            try {
+                Mail::send(new PaymentReceivedMail($payment, $attendee));
+            } catch (\Exception $e) {
+                Log::error('Failed to send payment received email for additional payment', [
+                    'error' => $e->getMessage(),
+                    'payment_id' => $payment->id,
+                ]);
+            }
 
             // Send admin notification
             try {
@@ -185,6 +196,16 @@ class EventsController extends Controller
                 'status' => 'pending',
                 'method' => 'mpesa',
             ]);
+
+            // Send immediate payment received email to attendee
+            try {
+                Mail::send(new PaymentReceivedMail($payment, $attendee));
+            } catch (\Exception $e) {
+                Log::error('Failed to send payment received email', [
+                    'error' => $e->getMessage(),
+                    'payment_id' => $payment->id,
+                ]);
+            }
 
             // Send admin notification
             try {
@@ -354,6 +375,16 @@ class EventsController extends Controller
             // Update all attendees to link them to the payment
             foreach ($attendees as $attendee) {
                 $attendee->update(['payment_id' => $groupPayment->id]);
+            }
+
+            // Send immediate payment received email to primary attendee
+            try {
+                Mail::send(new PaymentReceivedMail($groupPayment, $attendees[0]));
+            } catch (\Exception $e) {
+                Log::error('Failed to send payment received email for group ticket', [
+                    'error' => $e->getMessage(),
+                    'payment_id' => $groupPayment->id,
+                ]);
             }
 
             // Send admin notification
