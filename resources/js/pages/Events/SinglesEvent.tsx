@@ -226,6 +226,25 @@ export default function SinglesEvent() {
                     <p className="text-yellow-300/90 text-xs sm:text-sm mt-1 italic">For inquiries and support</p>
                   </div>
                 </div>
+
+                {/* Legal Links */}
+                <div className="mt-4 pt-3 border-t border-yellow-500/20">
+                  <div className="text-center space-x-4">
+                    <a 
+                      href={route('privacy-policy')}
+                      className="text-yellow-400/80 hover:text-yellow-300 text-xs sm:text-sm transition-colors duration-300 hover:underline"
+                    >
+                      Privacy Policy
+                    </a>
+                    <span className="text-yellow-500/50">|</span>
+                    <a 
+                      href={route('terms-of-service')}
+                      className="text-yellow-400/80 hover:text-yellow-300 text-xs sm:text-sm transition-colors duration-300 hover:underline"
+                    >
+                      Terms of Service
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
           </main>
