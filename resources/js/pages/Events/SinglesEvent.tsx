@@ -131,7 +131,7 @@ export default function SinglesEvent() {
                           <div className="text-lg sm:text-xl md:text-2xl font-black text-yellow-500 mb-1">Ksh. 4,999</div>
                           <div className="text-yellow-300/90 text-xs sm:text-sm font-semibold">Per Person</div>
                           <p className="text-yellow-300/70 text-xs mt-1 italic">
-                            Secure with Ksh. 1,000 minimum, and pay balance later.
+                            Secure with Ksh. 1,000 minimum, and pay balance by 24th Oct.
                           </p>
                         </div>
                       </div>
@@ -218,10 +218,10 @@ export default function SinglesEvent() {
                       <span className="font-bold text-yellow-400 text-xs sm:text-sm tracking-wide">Contact Us</span>
                     </div>
                     <a 
-                      href="tel:+254717186600" 
+                      href="tel:+254712328325" 
                       className="text-yellow-500 font-black text-sm sm:text-lg hover:text-yellow-400 transition-colors duration-300 hover:underline cursor-pointer"
                     >
-                      0717186600
+                      0712328325
                     </a>
                     <p className="text-yellow-300/90 text-xs sm:text-sm mt-1 italic">For inquiries and support</p>
                   </div>

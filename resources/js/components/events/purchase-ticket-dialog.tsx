@@ -316,7 +316,6 @@ export default function PurchaseTicketDialog({ eventId }: { eventId?: number }) 
               step={1}
               value={form.data.amount}
               onChange={(e) => form.setData('amount', e.target.value)}
-              placeholder="e.g. 4999"
               required
               aria-invalid={!!form.errors.amount || undefined}
               className="h-9 sm:h-10"
