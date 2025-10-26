@@ -116,9 +116,13 @@ class WhatsAppService
         // Determine ticket type
         $ticketType = $attendee->group_ticket_id ? 'Group-of-5' : 'Individual';
         
-        $message = "🎉 *Payment Confirmed!*\n\n";
+        // Calculate days remaining
+        $eventDate = \Carbon\Carbon::create(2025, 10, 31);
+        $daysRemaining = max(0, (int) now()->diffInDays($eventDate, false));
+        
+        $message = "🎉 *Congratulations!*\n\n";
         $message .= "Dear *{$attendee->name}*,\n\n";
-        $message .= "Your payment has been successfully confirmed for the *OLQP Singles Dinner 2025*.\n\n";
+        $message .= "Your payment was confirmed for *OLQP Singles Dinner 2025*! 🎊\n\n";
         
         $message .= "📋 *Latest Payment Details:*\n";
         $message .= "• Event Ticket Number: {$attendee->id}\n";
@@ -153,20 +157,21 @@ class WhatsAppService
         }
 
         $message .= "\n🎭 *Event Details:*\n";
-        $message .= "• Event: {$event->name}\n";
-        $message .= "• Date: " . $event->date->format('F j, Y') . "\n";
-        $message .= "• Time: 6:00 PM - 12:00 AM\n";
-        $message .= "• Venue: The Edge, South C\n\n";
+        $message .= "• Date: Oct 31, 2025\n";
+        $message .= "• Time: 6PM-12AM\n";
+        $message .= "• Venue: The Boma Hotel, South C\n";
+        $message .= "• Days Left: *{$daysRemaining}* " . ($daysRemaining == 1 ? 'day' : 'days') . "\n\n";
 
         if ($attendee->isFullyPaid()) {
-            $message .= "🎫 *Your event ticket is attached to this message!* Please save both this message and the attached PDF ticket. You may need to show either at the event entrance. The ticket contains a QR code for quick verification.\n\n";
+            $message .= "🎫 *Your event ticket is attached!* Save this message and the PDF ticket. Show either at the event entrance.\n\n";
+            $message .= "🎉 *You're all set! We can't wait to see you!* 🎊";
         } else {
             $requiredAmount = $attendee->getRequiredAmount();
-            $message .= "Please save this message. You may need to show it at the event entrance. Once your payment is complete (Ksh. " . number_format($requiredAmount) . "), you will receive an event ticket with QR code for verification.\n\n";
+            $message .= "📧 Save this message. Complete payment (Ksh. " . number_format($requiredAmount) . ") to receive your event ticket.\n\n";
+            $message .= "We look forward to seeing you! 🎊";
         }
 
-        $message .= "For any questions, contact us at 0777111000.\n\n";
-        $message .= "We look forward to seeing you! 🎊";
+        $message .= "\n\n📞 Need help? Call 0712328325";
 
         return $message;
     }
@@ -422,6 +427,58 @@ class WhatsAppService
             Log::error('Twilio WhatsApp error', [
                 'phone_number' => $phoneNumber,
                 'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    public function sendPaymentReminder(Attendee $attendee, float $totalPaid, float $remainingBalance, int $daysRemaining): bool
+    {
+        try {
+            if (!$attendee->whatsapp) {
+                Log::warning('No WhatsApp number found for attendee', [
+                    'attendee_id' => $attendee->id,
+                    'attendee_name' => $attendee->name
+                ]);
+                return false;
+            }
+
+            // Validate API configuration
+            if (!$this->validateApiConfiguration()) {
+                return false;
+            }
+
+            // Determine ticket type
+            $ticketType = $attendee->group_ticket_id ? 'Group-of-5' : 'Individual';
+            
+            // Calculate days remaining
+            $eventDate = \Carbon\Carbon::create(2025, 10, 31);
+            $daysRemaining = max(0, (int) now()->diffInDays($eventDate, false));
+            
+            // Build compact reminder message
+            $message = "🔔 *Payment Reminder - OLQP Singles Dinner 2025*\n\n";
+            $message .= "Hi *{$attendee->name}*,\n\n";
+            $message .= "📅 *Event:* Oct 31, 2025 | 6PM-12AM | The Boma Hotel, South C\n";
+            $message .= "🎫 *Ticket:* {$ticketType} | ID: {$attendee->id}\n\n";
+            $message .= "💰 *Payment Status:*\n";
+            $message .= "• Paid: Ksh. " . number_format($totalPaid) . "\n";
+            $message .= "• Balance: Ksh. " . number_format($remainingBalance) . "\n";
+            $message .= "• Days Left: {$daysRemaining}\n\n";
+            $message .= "💳 *To Pay:*\n";
+            $message .= "1. After paying via M-Pesa, Paybill: 7171186, Account: DINNER\n";
+            $message .= "2. Go to www.olqpdinner.com and click 'Update Ticket'\n";
+            $message .= "3. Enter Ticket ID: {$attendee->id} (Your ticket ID is {$attendee->id})\n";
+            $message .= "4. Enter M-Pesa code & amount\n\n";
+            $message .= "Complete payment to receive your event ticket! 🎫\n\n";
+            $message .= "Need help? Call 0712328325";
+
+            return $this->sendMessage($attendee->whatsapp, $message);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to send WhatsApp payment reminder', [
+                'attendee_id' => $attendee->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
             return false;
         }

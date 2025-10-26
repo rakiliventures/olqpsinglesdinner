@@ -170,41 +170,56 @@ export default function AdminAttendeesIndex() {
     <AppLayout breadcrumbs={[{ title: 'Attendees', href: route('admin.attendees.index') }]}>
       <Head title="Attendees" />
       <div className="p-4 sm:p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-semibold">Attendees</h1>
-            {props.event && (
-              <div className="text-sm text-neutral-600 dark:text-neutral-400">Event: {props.event.name} ({props.event.date})</div>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => window.open(route('admin.attendees.export-pdf'), '_blank')}
-              className="flex items-center gap-2"
-            >
-              <FileText className="h-4 w-4" />
-              Export PDF
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => window.open(route('admin.attendees.export-excel'), '_blank')}
-              className="flex items-center gap-2"
-            >
-              <TableIcon className="h-4 w-4" />
-              Export CSV
-            </Button>
-            <BulkSendRemindersButton 
-              onBulkSendReminders={bulkSendReminders}
-              processing={bulkSendRemindersForm.processing}
-              attendees={filteredAttendees}
-            />
-            <BulkResendTicketsButton 
-              onBulkResendTickets={bulkResendTickets}
-              processing={bulkResendTicketsForm.processing}
-              attendees={filteredAttendees}
-            />
-            <CreateAttendeeModal />
+        <div className="mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-xl font-semibold">Attendees</h1>
+              {props.event && (
+                <div className="text-sm text-neutral-600 dark:text-neutral-400">Event: {props.event.name} ({props.event.date})</div>
+              )}
+            </div>
+            
+            {/* Mobile-first button layout */}
+            <div className="flex flex-col sm:flex-row gap-2">
+              {/* Export buttons - always visible */}
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => window.open(route('admin.attendees.export-pdf'), '_blank')}
+                  className="flex items-center gap-2 text-xs sm:text-sm"
+                  size="sm"
+                >
+                  <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Export PDF</span>
+                  <span className="sm:hidden">PDF</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => window.open(route('admin.attendees.export-excel'), '_blank')}
+                  className="flex items-center gap-2 text-xs sm:text-sm"
+                  size="sm"
+                >
+                  <TableIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Export CSV</span>
+                  <span className="sm:hidden">CSV</span>
+                </Button>
+              </div>
+              
+              {/* Bulk action buttons - always visible */}
+              <div className="flex gap-2">
+                <BulkSendRemindersButton 
+                  onBulkSendReminders={bulkSendReminders}
+                  processing={bulkSendRemindersForm.processing}
+                  attendees={filteredAttendees}
+                />
+                <BulkResendTicketsButton 
+                  onBulkResendTickets={bulkResendTickets}
+                  processing={bulkResendTicketsForm.processing}
+                  attendees={filteredAttendees}
+                />
+                <CreateAttendeeModal />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -227,7 +242,8 @@ export default function AdminAttendeesIndex() {
           )}
         </div>
 
-        <div className="rounded-lg border border-black/10 dark:border-white/10">
+        {/* Desktop Table View */}
+        <div className="hidden lg:block rounded-lg border border-black/10 dark:border-white/10">
           <Table>
             <TableHeader>
               <TableRow>
@@ -294,6 +310,72 @@ export default function AdminAttendeesIndex() {
           </Table>
         </div>
 
+        {/* Mobile Card View */}
+        <div className="lg:hidden space-y-3">
+          {filteredAttendees.length === 0 && (
+            <div className="text-center py-8 text-sm text-neutral-600 dark:text-neutral-400">
+              {searchTerm ? 'No attendees found matching your search.' : 'No attendees found.'}
+            </div>
+          )}
+          {filteredAttendees.map((a) => (
+            <div key={a.id} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <div className="font-mono font-medium text-sm text-gray-500 dark:text-gray-400">#{a.id}</div>
+                  <div className="font-semibold text-lg">{a.name}</div>
+                  <div className="text-xs text-blue-600 dark:text-blue-400 font-semibold mt-1">
+                    {a.ticket_type}
+                  </div>
+                  {a.gender && <div className="text-xs text-gray-500 dark:text-gray-400">{a.gender}</div>}
+                </div>
+                <PaymentBadge total={a.total_amount} />
+              </div>
+              
+              <div className="space-y-2 text-sm mb-4">
+                <div className="flex justify-between">
+                  <span className="text-gray-500 dark:text-gray-400">Email:</span>
+                  <span className="text-right break-all">{a.email}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500 dark:text-gray-400">WhatsApp:</span>
+                  <span>{a.whatsapp}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500 dark:text-gray-400">OLQP Member:</span>
+                  <span>{a.is_olqp_member ? 'Yes' : 'No'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500 dark:text-gray-400">Total Paid:</span>
+                  <span className="font-semibold">Ksh. {a.total_amount.toLocaleString()}</span>
+                </div>
+              </div>
+              
+              <div className="flex gap-1 flex-wrap">
+                <EditAttendeeModal attendee={a} />
+                {a.total_amount >= 4999 && (
+                  <ResendTicketButton 
+                    attendeeId={a.id} 
+                    attendeeName={a.name}
+                    onResend={(id) => resendTicket(id, a.name)}
+                    processing={resendTicketForm.processing}
+                  />
+                )}
+                {a.total_amount < 4999 && (
+                  <SendReminderButton 
+                    attendeeId={a.id} 
+                    attendeeName={a.name}
+                    onSendReminder={(id) => sendReminder(id, a.name)}
+                    processing={sendReminderForm.processing}
+                  />
+                )}
+                <Button variant="destructive" size="sm" onClick={() => submitDelete(a.id)}>
+                  <Trash2Icon className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+
         {/* Progress Dialog for Resend Ticket */}
         <Dialog open={isResendingTicket} onOpenChange={() => {}}>
           <DialogContent className="sm:max-w-md">
@@ -312,7 +394,7 @@ export default function AdminAttendeesIndex() {
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    Sending ticket to {resendingTicketName}
+                    Sending confirmed payment ticket to {resendingTicketName}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Generating PDF and sending email...
@@ -346,7 +428,7 @@ export default function AdminAttendeesIndex() {
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    Processing bulk ticket resend
+                    Processing bulk confirmed payment ticket resend
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Generating PDFs and sending emails to all fully paid attendees...
@@ -451,8 +533,10 @@ function CreateAttendeeModal() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <PlusIcon /> New Attendee
+        <Button size="sm" className="text-xs sm:text-sm">
+          <PlusIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+          <span className="hidden sm:inline">New Attendee</span>
+          <span className="sm:hidden">New</span>
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -541,8 +625,9 @@ function EditAttendeeModal({ attendee }: { attendee: AttendeeRow }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">
-          <PencilIcon /> Edit
+        <Button variant="outline" size="sm">
+          <PencilIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+          <span className="hidden sm:inline ml-1">Edit</span>
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -610,7 +695,8 @@ function ResendTicketButton({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <MailIcon className="h-4 w-4" />
+          <MailIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+          <span className="hidden sm:inline ml-1">Resend</span>
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -622,7 +708,7 @@ function ResendTicketButton({
             Are you sure you want to resend the event ticket to <strong>{attendeeName}</strong>?
           </p>
           <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-2">
-            This will send a new email with the event ticket PDF attached.
+            This will send a new email with the event ticket PDF attached. The attendee's payment has been confirmed.
           </p>
         </div>
         <DialogFooter>
@@ -660,7 +746,8 @@ function SendReminderButton({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <BellIcon className="h-4 w-4" />
+          <BellIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+          <span className="hidden sm:inline ml-1">Remind</span>
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -709,9 +796,10 @@ function BulkSendRemindersButton({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" disabled={partiallyPaidCount === 0}>
-          <UsersIcon className="h-4 w-4 mr-2" />
-          Send Reminders ({partiallyPaidCount})
+        <Button variant="outline" disabled={partiallyPaidCount === 0} size="sm" className="text-xs sm:text-sm">
+          <UsersIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+          <span className="hidden sm:inline">Send Reminders ({partiallyPaidCount})</span>
+          <span className="sm:hidden">Reminders ({partiallyPaidCount})</span>
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -760,9 +848,10 @@ function BulkResendTicketsButton({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" disabled={fullyPaidCount === 0}>
-          <TicketIcon className="h-4 w-4 mr-2" />
-          Resend Tickets ({fullyPaidCount})
+        <Button variant="outline" disabled={fullyPaidCount === 0} size="sm" className="text-xs sm:text-sm">
+          <TicketIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+          <span className="hidden sm:inline">Resend Tickets ({fullyPaidCount})</span>
+          <span className="sm:hidden">Tickets ({fullyPaidCount})</span>
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -774,7 +863,7 @@ function BulkResendTicketsButton({
             Are you sure you want to resend event tickets to <strong>{fullyPaidCount} fully paid attendees</strong>?
           </p>
           <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-2">
-            This will send event tickets with QR codes to all attendees who have fully paid (Ksh. 4,999 and above).
+            This will send event tickets with QR codes to all attendees who have fully paid (Ksh. 4,999 and above). All payments have been confirmed.
           </p>
         </div>
         <DialogFooter>
