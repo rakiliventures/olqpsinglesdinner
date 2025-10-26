@@ -49,6 +49,9 @@ class PaymentReminderMail extends Mailable
      */
     public function content(): Content
     {
+        // Determine ticket type
+        $ticketType = $this->attendee->group_ticket_id ? 'Group-of-5' : 'Individual';
+        
         return new Content(
             view: 'emails.payment-reminder',
             with: [
@@ -58,6 +61,7 @@ class PaymentReminderMail extends Mailable
                 'remainingBalance' => $this->remainingBalance,
                 'daysRemaining' => $this->daysRemaining,
                 'eventAmount' => (float) $this->event->amount,
+                'ticketType' => $ticketType,
             ]
         );
     }

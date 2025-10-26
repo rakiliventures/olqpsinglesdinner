@@ -267,7 +267,7 @@
             </div>
 
             <div class="message">
-                Great news! Your payment has been successfully confirmed. You are now officially registered for the OLQP Singles Dinner 2025 event.
+                🎉 <strong>Congratulations!</strong> Your payment was confirmed for the OLQP Singles Dinner 2025!
             </div>
 
             <div class="payment-details">
@@ -355,6 +355,11 @@
                 @endif
             </div>
 
+            @php
+                $eventDate = \Carbon\Carbon::create(2025, 10, 31);
+                $daysRemaining = max(0, (int) now()->diffInDays($eventDate, false));
+            @endphp
+
             <div class="event-info">
                 <h3>Event Information</h3>
                 <div class="detail-row">
@@ -363,7 +368,7 @@
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Date:</span>
-                    <span class="detail-value">{{ $event->date->format('F j, Y') }}</span>
+                    <span class="detail-value">October 31, 2025</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Time:</span>
@@ -371,26 +376,31 @@
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Venue:</span>
-                    <span class="detail-value">The Boma, South C</span>
+                    <span class="detail-value">The Boma Hotel, South C</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Days Remaining:</span>
+                    <span class="detail-value" style="color: #28a745; font-weight: bold;">{{ $daysRemaining }} {{ $daysRemaining == 1 ? 'day' : 'days' }}</span>
                 </div>
             </div>
 
             <div class="message">
-                <strong>What's Next?</strong><br>
                 @if($isFullyPaid)
-                     <strong>Your event ticket is attached to this email!</strong> Please save both this confirmation email and the attached PDF ticket. You may be required to show either at the event entrance. The ticket contains a QR code for quick verification.
+                    <strong>🎫 Your Event Ticket is Attached!</strong><br>
+                    Save this email and the attached PDF ticket. Show either at the event entrance. The ticket contains a QR code for quick verification.
+                    <br><br>
+                    <strong>🎉 You're all set! We can't wait to see you at the event!</strong>
                 @else
-                    Please save this confirmation email. You may be required to show it at the event entrance. Once your payment is complete (Ksh. {{ number_format($requiredAmount) }}), you will receive an event ticket with QR code for verification.
+                    <strong>📧 Save this confirmation email</strong> - you may need to show it at the event entrance. Complete your payment (Ksh. {{ number_format($requiredAmount) }}) to receive your event ticket with QR code.
+                    <br><br>
+                    <strong>We look forward to seeing you at this exciting evening!</strong>
                 @endif
-                <br><br>
-                We look forward to seeing you at this exciting evening of fun, networking and great experiences!
             </div>
 
             <div class="contact-info">
                 <h4>📞 Need Help?</h4>
-                <p><strong>Contact:</strong> 0717186600</p>
+                <p><strong>Contact:</strong> 0712328325</p>
                 <p><strong>Email:</strong> olqpsouthbsecretary@gmail.com</p>
-                <p>For any questions or concerns, please don't hesitate to reach out to us.</p>
             </div>
         </div>
 

@@ -7,6 +7,7 @@ use App\Models\Attendee;
 use App\Models\Event;
 use App\Models\Payment;
 use App\Services\TicketPdfService;
+use App\Services\WhatsAppService;
 use App\Mail\PaymentConfirmedMail;
 use App\Mail\PaymentReminderMail;
 use Illuminate\Http\RedirectResponse;
@@ -20,6 +21,12 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class AttendeesController extends Controller
 {
+    protected WhatsAppService $whatsappService;
+
+    public function __construct(WhatsAppService $whatsappService)
+    {
+        $this->whatsappService = $whatsappService;
+    }
     public function index(): Response
     {
         $event = Event::query()->orderBy('date')->first();
@@ -251,7 +258,7 @@ class AttendeesController extends Controller
             
             // Calculate days remaining until event
             $eventDate = \Carbon\Carbon::create(2025, 10, 31); // October 31st, 2025
-            $daysRemaining = max(0, $eventDate->diffInDays(now(), false));
+            $daysRemaining = max(0, (int) now()->diffInDays($eventDate, false));
             
             // Send the reminder email
             Mail::to($attendee->email)->send(new PaymentReminderMail(
@@ -261,16 +268,35 @@ class AttendeesController extends Controller
                 $daysRemaining
             ));
             
+            // Send WhatsApp reminder
+            $whatsappSent = $this->whatsappService->sendPaymentReminder(
+                $attendee, 
+                $totalPaid, 
+                $remainingBalance, 
+                $daysRemaining
+            );
+            
+            $notificationsSent = ['email'];
+            if ($whatsappSent) {
+                $notificationsSent[] = 'whatsapp';
+            }
+            
             Log::info('Payment reminder sent successfully', [
                 'attendee_id' => $attendee->id,
                 'attendee_name' => $attendee->name,
                 'attendee_email' => $attendee->email,
                 'total_paid' => $totalPaid,
                 'remaining_balance' => $remainingBalance,
-                'days_remaining' => $daysRemaining
+                'days_remaining' => $daysRemaining,
+                'notifications_sent' => $notificationsSent
             ]);
             
-            return back()->with('success', 'Payment reminder sent successfully to ' . $attendee->email);
+            $message = 'Payment reminder sent successfully to ' . $attendee->email;
+            if ($whatsappSent) {
+                $message .= ' and WhatsApp';
+            }
+            
+            return back()->with('success', $message);
             
         } catch (\Exception $e) {
             Log::error('Failed to send payment reminder', [
@@ -307,7 +333,7 @@ class AttendeesController extends Controller
 
             $eventAmount = (float) $event->amount;
             $eventDate = \Carbon\Carbon::create(2025, 10, 31); // October 31st, 2025
-            $daysRemaining = max(0, $eventDate->diffInDays(now(), false));
+            $daysRemaining = max(0, (int) now()->diffInDays($eventDate, false));
 
             $successCount = 0;
             $errorCount = 0;
@@ -317,12 +343,21 @@ class AttendeesController extends Controller
                     $totalPaid = $attendee->payments->where('status', 'confirmed')->sum('amount');
                     $remainingBalance = $eventAmount - $totalPaid;
 
+                    // Send email reminder
                     Mail::to($attendee->email)->send(new PaymentReminderMail(
                         $attendee,
                         $totalPaid,
                         $remainingBalance,
                         $daysRemaining
                     ));
+
+                    // Send WhatsApp reminder
+                    $this->whatsappService->sendPaymentReminder(
+                        $attendee,
+                        $totalPaid,
+                        $remainingBalance,
+                        $daysRemaining
+                    );
 
                     $successCount++;
                 } catch (\Exception $e) {
