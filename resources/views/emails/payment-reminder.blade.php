@@ -196,20 +196,28 @@
                 <strong>Hello {{ $attendee->name }},</strong>
             </div>
 
-            <p>We hope you're excited about the upcoming OLQP Singles Dinner 2025! This is a friendly reminder about your payment status.</p>
+            <p>This is a friendly reminder about your payment status for the OLQP Singles Dinner 2025.</p>
 
             @if($daysRemaining <= 7)
                 <div class="urgency">
-                    <strong>URGENT:</strong> Only {{ $daysRemaining }} {{ $daysRemaining == 1 ? 'day' : 'days' }} remaining until the event! Please complete your payment as soon as possible to secure your spot.
+                    <strong>URGENT:</strong> Only {{ $daysRemaining }} {{ $daysRemaining == 1 ? 'day' : 'days' }} remaining until the event! Please complete your payment immediately.
                 </div>
             @elseif($daysRemaining <= 14)
                 <div class="urgency">
-                    <strong>Reminder:</strong> Only {{ $daysRemaining }} days remaining until the event. Please complete your payment to secure your spot.
+                    <strong>Reminder:</strong> Only {{ $daysRemaining }} days remaining until the event. Please complete your payment soon.
+                </div>
+            @else
+                <div class="urgency">
+                    <strong>Payment Due:</strong> {{ $daysRemaining }} days remaining until the event. Please complete your payment to secure your spot.
                 </div>
             @endif
 
             <div class="payment-summary">
                 <h3>💰 Payment Summary</h3>
+                <div class="amount-row">
+                    <span class="label">Ticket Type:</span>
+                    <span class="amount">{{ $ticketType }}</span>
+                </div>
                 <div class="amount-row">
                     <span class="label">Event Fee:</span>
                     <span class="amount">Ksh. {{ number_format($eventAmount) }}</span>
@@ -229,7 +237,7 @@
                 <div class="event-details">
                     <div class="event-detail">
                         <div class="label">Date</div>
-                        <div class="value">{{ $event->date->format('F j, Y') }}</div>
+                        <div class="value">October 31, 2025</div>
                     </div>
                     <div class="event-detail">
                         <div class="label">Time</div>
@@ -237,8 +245,24 @@
                     </div>
                     <div class="event-detail">
                         <div class="label">Venue</div>
-                        <div class="value">The Boma, South C</div>
+                        <div class="value">The Boma Hotel, South C</div>
                     </div>
+                </div>
+            </div>
+
+            <div class="payment-methods">
+                <h4>💳 How to Complete Payment</h4>
+                <div class="method">
+                    <strong>Step 1:</strong> After paying amount via M-Pesa, Paybill: 7171186, Account: DINNER
+                </div>
+                <div class="method">
+                    <strong>Step 2:</strong> Go to www.olqpdinner.com and click 'Update Ticket' button
+                </div>
+                <div class="method">
+                    <strong>Step 3:</strong> Enter your Ticket ID: <strong>{{ $attendee->id }}</strong> (Your ticket ID is {{ $attendee->id }})
+                </div>
+                <div class="method">
+                    <strong>Step 4:</strong> Enter your M-Pesa transaction code and amount
                 </div>
             </div>
 
@@ -248,25 +272,14 @@
                 </a>
             </div>
 
-            <div class="payment-methods">
-                <h4>💳 Payment Method</h4>
-                <div class="method">
-                    <strong>M-Pesa:</strong> Paybill: 7171186, Account: {{ 'DINNER' }}
-                </div>
-            </div>
-
-            <p><strong>Important:</strong> Your spot is reserved, but please complete your payment to confirm your attendance. Once fully paid, you'll receive your event ticket with QR code for entry.</p>
-
-            <p>If you have any questions or need assistance with payment, please don't hesitate to contact us.</p>
+            <p><strong>Important:</strong> Complete your payment to secure your spot. Once fully paid, you'll receive your event ticket with QR code for entry.</p>
         </div>
 
         <div class="footer">
             <div class="contact-info">
-                <strong>Contact Us:</strong><br>
-                📞 Phone: 0717186600<br>
-                📧 Email: olqpsouthbsecretary@gmail.com<br>
+                <strong>Contact:</strong> 0712328325 | olqpsouthbsecretary@gmail.com
             </div>
-            <p style="margin-top: 20px; font-size: 12px; color: #999;">
+            <p style="margin-top: 15px; font-size: 12px; color: #999;">
                 This is an automated reminder. Please do not reply to this email.
             </p>
         </div>
