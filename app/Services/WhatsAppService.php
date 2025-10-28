@@ -120,9 +120,9 @@ class WhatsAppService
         $eventDate = \Carbon\Carbon::create(2025, 10, 31);
         $daysRemaining = max(0, (int) now()->diffInDays($eventDate, false));
         
-        $message = "🎉 *Congratulations!*\n\n";
+        $message = "🎉 *Thank you for registering!*\n\n";
         $message .= "Dear *{$attendee->name}*,\n\n";
-        $message .= "Your payment was confirmed for *OLQP Singles Dinner 2025*! 🎊\n\n";
+        $message .= "We truly appreciate your participation in *OLQP Singles Dinner 2025*! 🎊\n\n";
         
         $message .= "📋 *Latest Payment Details:*\n";
         $message .= "• Event Ticket Number: {$attendee->id}\n";
@@ -161,10 +161,18 @@ class WhatsAppService
         $message .= "• Time: 6PM-12AM\n";
         $message .= "• Venue: The Boma Hotel, South C\n";
         $message .= "• Days Left: *{$daysRemaining}* " . ($daysRemaining == 1 ? 'day' : 'days') . "\n\n";
+        
+        $message .= "🚗 *Arrival & Check-in:*\n";
+        $message .= "• Arrival Time: 5:30 PM - 6:30 PM\n";
+        $message .= "• Check-in: Present ticket (PDF or QR code) at entrance\n";
+        $message .= "• Parking: Free at The Boma Hotel\n";
+        $message .= "• Dress Code: Smart casual/Semi-formal\n";
+        $message .= "• Bring: Valid ID, ticket, and great attitude!\n\n";
 
         if ($attendee->isFullyPaid()) {
             $message .= "🎫 *Your event ticket is attached!* Save this message and the PDF ticket. Show either at the event entrance.\n\n";
-            $message .= "🎉 *You're all set! We can't wait to see you!* 🎊";
+            $message .= "🎉 *We're excited to welcome you to an evening of fun, networking, and great experiences!*\n";
+            $message .= "Get ready for delicious food, engaging conversations, and memorable moments. Don't forget to bring your positive energy and be ready to make new connections! 🎊";
         } else {
             $requiredAmount = $attendee->getRequiredAmount();
             $message .= "📧 Save this message. Complete payment (Ksh. " . number_format($requiredAmount) . ") to receive your event ticket.\n\n";
@@ -521,5 +529,87 @@ class WhatsAppService
         }
 
         return $result;
+    }
+    
+    /**
+     * Send pre-event message to attendee
+     */
+    public function sendPreEventMessage(Attendee $attendee, string $customMessage = null): bool
+    {
+        try {
+            // Load attendee with payments and event
+            $attendee = $attendee->load(['payments', 'event']);
+            
+            // Calculate days remaining
+            $eventDate = \Carbon\Carbon::create(2025, 10, 31);
+            $daysRemaining = max(0, (int) now()->diffInDays($eventDate, false));
+            
+            // Determine ticket type
+            $ticketType = $attendee->group_ticket_id ? 'Group-of-5' : 'Individual';
+            
+            // Use custom message if provided, otherwise use default
+            if ($customMessage) {
+                $message = $customMessage;
+            } else {
+                $message = "🎉 *You're Invited!*\n\n";
+                $message .= "Dear *{$attendee->name}*,\n\n";
+                $message .= "🎊 *We're thrilled you're joining us!* Thank you for registering for the most exciting singles dinner event of the year!\n\n";
+            }
+            
+            $message .= "🎭 *Event Details:*\n";
+            $message .= "• Date: Oct 31, 2025\n";
+            $message .= "• Time: 6PM-12AM\n";
+            $message .= "• Venue: The Boma Hotel, South C\n";
+            $message .= "• Days Left: *{$daysRemaining}* " . ($daysRemaining == 1 ? 'day' : 'days') . "\n\n";
+            
+            $message .= "🚗 *Arrival & Check-in:*\n";
+            $message .= "• Arrival Time: 5:30 PM - 6:30 PM\n";
+            $message .= "• Check-in: Present ticket (PDF or QR code) at entrance\n";
+            $message .= "• Parking: Free at The Boma Hotel\n";
+            $message .= "• Dress Code: Elegant with a masquerade\n";
+            $message .= "• Bring: Valid ID, ticket, and great attitude!\n\n";
+            
+            $message .= "🎫 *Your event ticket is attached!* Save this message and the PDF ticket. Show either at the event entrance.\n\n";
+            $message .= "🌟 *Get ready for an unforgettable evening!*\n";
+            $message .= "Prepare for amazing food, exciting conversations, and the chance to meet incredible people. Bring your best energy and be ready to create beautiful memories! 🎊";
+            
+            $response = Http::timeout(10)->post($this->apiUrl, [
+                'messaging_product' => 'whatsapp',
+                'to' => $attendee->whatsapp,
+                'type' => 'text',
+                'text' => [
+                    'body' => $message
+                ]
+            ], [
+                'Authorization' => 'Bearer ' . $this->accessToken,
+                'Content-Type' => 'application/json'
+            ]);
+            
+            if ($response->successful()) {
+                Log::info('Pre-event WhatsApp message sent successfully', [
+                    'attendee_id' => $attendee->id,
+                    'attendee_name' => $attendee->name,
+                    'attendee_whatsapp' => $attendee->whatsapp,
+                    'ticket_type' => $ticketType,
+                    'days_remaining' => $daysRemaining
+                ]);
+                return true;
+            } else {
+                Log::error('Failed to send pre-event WhatsApp message', [
+                    'attendee_id' => $attendee->id,
+                    'response' => $response->body(),
+                    'status' => $response->status()
+                ]);
+                return false;
+            }
+            
+        } catch (\Exception $e) {
+            Log::error('Exception sending pre-event WhatsApp message', [
+                'attendee_id' => $attendee->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return false;
+        }
     }
 }

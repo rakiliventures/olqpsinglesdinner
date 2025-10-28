@@ -25,6 +25,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('attendees/{attendee}/send-reminder', [AttendeesController::class, 'sendReminder'])->name('admin.attendees.send-reminder');
     Route::post('attendees/bulk-send-reminders', [AttendeesController::class, 'bulkSendReminders'])->name('admin.attendees.bulk-send-reminders');
     Route::post('attendees/bulk-resend-tickets', [AttendeesController::class, 'bulkResendTickets'])->name('admin.attendees.bulk-resend-tickets');
+    Route::post('attendees/{attendee}/send-pre-event', [AttendeesController::class, 'sendPreEventMessage'])->name('admin.attendees.send-pre-event');
+    Route::post('attendees/bulk-send-pre-event', [AttendeesController::class, 'bulkSendPreEventMessages'])->name('admin.attendees.bulk-send-pre-event');
     Route::get('attendees/export-pdf', [AttendeesController::class, 'exportPdf'])->name('admin.attendees.export-pdf');
     Route::get('attendees/export-excel', [AttendeesController::class, 'exportExcel'])->name('admin.attendees.export-excel');
 

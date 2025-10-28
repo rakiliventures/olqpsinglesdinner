@@ -10,6 +10,7 @@ use App\Services\TicketPdfService;
 use App\Services\WhatsAppService;
 use App\Mail\PaymentConfirmedMail;
 use App\Mail\PaymentReminderMail;
+use App\Mail\PreEventMail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -651,5 +652,218 @@ class AttendeesController extends Controller
         fclose($output);
         
         return $csvContent;
+    }
+
+    public function sendPreEventMessage(Request $request, Attendee $attendee): RedirectResponse
+    {
+        try {
+            $validated = $request->validate([
+                'custom_message' => ['nullable', 'string', 'max:2000'],
+            ]);
+            
+            // Load attendee with payments, event, and group ticket
+            $attendee = $attendee->load(['payments', 'event', 'groupTicket']);
+            
+            // Check if attendee is fully paid using the model method
+            if (!$attendee->isFullyPaid()) {
+                return back()->with('error', 'Pre-event messages can only be sent to fully paid attendees.');
+            }
+            
+            // Get the latest confirmed payment
+            $latestPayment = $attendee->payments
+                ->where('status', 'confirmed')
+                ->sortByDesc('created_at')
+                ->first();
+            
+            if (!$latestPayment) {
+                return back()->with('error', 'No confirmed payment found for this attendee.');
+            }
+            
+            // Check if this is a group ticket
+            if ($attendee->group_ticket_id && $attendee->payment_id) {
+                // This is a group ticket - send to all group members
+                $groupAttendees = Attendee::where('payment_id', $attendee->payment_id)->get();
+                
+                $successCount = 0;
+                $errorCount = 0;
+                
+                foreach ($groupAttendees as $groupAttendee) {
+                    try {
+                        // Send email
+                        Mail::to($groupAttendee->email)->send(new PreEventMail($latestPayment, $groupAttendee));
+                        
+                        // Send WhatsApp
+                        $this->whatsappService->sendPreEventMessage($groupAttendee, $validated['custom_message'] ?? null);
+                        
+                        $successCount++;
+                    } catch (\Exception $e) {
+                        $errorCount++;
+                        Log::error('Failed to send pre-event message to group attendee', [
+                            'attendee_id' => $groupAttendee->id,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
+                
+                Log::info('Pre-event messages sent to group successfully', [
+                    'group_size' => $groupAttendees->count(),
+                    'successful' => $successCount,
+                    'failed' => $errorCount
+                ]);
+                
+                if ($errorCount > 0) {
+                    return back()->with('warning', "Pre-event messages sent to {$successCount} attendees. {$errorCount} failed to send.");
+                }
+                
+                return back()->with('success', "Pre-event messages sent successfully to {$successCount} attendees.");
+            } else {
+                // This is an individual ticket
+                Mail::to($attendee->email)->send(new PreEventMail($latestPayment, $attendee));
+                
+                // Send WhatsApp
+                $this->whatsappService->sendPreEventMessage($attendee, $validated['custom_message'] ?? null);
+                
+                Log::info('Pre-event message sent successfully', [
+                    'attendee_id' => $attendee->id,
+                    'attendee_name' => $attendee->name,
+                    'attendee_email' => $attendee->email
+                ]);
+                
+                return back()->with('success', 'Pre-event message sent successfully to ' . $attendee->email);
+            }
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to send pre-event message', [
+                'attendee_id' => $attendee->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return back()->with('error', 'Failed to send pre-event message. Please try again.');
+        }
+    }
+
+    public function bulkSendPreEventMessages(Request $request): RedirectResponse
+    {
+        try {
+            $validated = $request->validate([
+                'custom_message' => ['nullable', 'string', 'max:2000'],
+            ]);
+            
+            $event = Event::query()->orderBy('date')->first();
+            if (!$event) {
+                return back()->with('error', 'No event found.');
+            }
+
+            // Get all attendees who are fully paid
+            $attendees = Attendee::query()
+                ->with(['payments', 'event'])
+                ->where('event_id', $event->id)
+                ->get();
+
+            $fullyPaidAttendees = $attendees->filter(function ($attendee) {
+                return $attendee->isFullyPaid();
+            });
+
+            if ($fullyPaidAttendees->isEmpty()) {
+                return back()->with('info', 'No fully paid attendees found to send pre-event messages to.');
+            }
+
+            $successCount = 0;
+            $errorCount = 0;
+
+            // Track processed group payments to avoid duplicates
+            $processedGroupPayments = [];
+            
+            foreach ($fullyPaidAttendees as $attendee) {
+                try {
+                    $latestPayment = $attendee->payments
+                        ->where('status', 'confirmed')
+                        ->sortByDesc('created_at')
+                        ->first();
+
+                    if (!$latestPayment) {
+                        $errorCount++;
+                        Log::warning('No confirmed payment found for fully paid attendee', [
+                            'attendee_id' => $attendee->id
+                        ]);
+                        continue;
+                    }
+                    
+                    // Check if this is a group ticket
+                    if ($attendee->group_ticket_id && $attendee->payment_id) {
+                        // Skip if we've already processed this group payment
+                        if (in_array($attendee->payment_id, $processedGroupPayments)) {
+                            continue;
+                        }
+                        
+                        // Mark this group payment as processed
+                        $processedGroupPayments[] = $attendee->payment_id;
+                        
+                        // Send to all group members
+                        $groupAttendees = Attendee::where('payment_id', $attendee->payment_id)->get();
+                        $groupSuccessCount = 0;
+                        $groupErrorCount = 0;
+                        
+                        foreach ($groupAttendees as $groupAttendee) {
+                            try {
+                                // Send email
+                                Mail::to($groupAttendee->email)->send(new PreEventMail($latestPayment, $groupAttendee));
+                                
+                                // Send WhatsApp
+                                $this->whatsappService->sendPreEventMessage($groupAttendee, $validated['custom_message'] ?? null);
+                                
+                                $groupSuccessCount++;
+                            } catch (\Exception $e) {
+                                $groupErrorCount++;
+                                Log::error('Failed to send pre-event message to group attendee', [
+                                    'attendee_id' => $groupAttendee->id,
+                                    'error' => $e->getMessage()
+                                ]);
+                            }
+                        }
+                        
+                        $successCount += $groupSuccessCount;
+                        $errorCount += $groupErrorCount;
+                        
+                    } else {
+                        // Individual ticket
+                        Mail::to($attendee->email)->send(new PreEventMail($latestPayment, $attendee));
+                        
+                        // Send WhatsApp
+                        $this->whatsappService->sendPreEventMessage($attendee, $validated['custom_message'] ?? null);
+                        
+                        $successCount++;
+                    }
+                    
+                } catch (\Exception $e) {
+                    $errorCount++;
+                    Log::error('Failed to send pre-event message to attendee', [
+                        'attendee_id' => $attendee->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
+            Log::info('Bulk pre-event messages sent', [
+                'total_attempted' => $fullyPaidAttendees->count(),
+                'successful' => $successCount,
+                'failed' => $errorCount
+            ]);
+
+            if ($errorCount > 0) {
+                return back()->with('warning', "Pre-event messages sent to {$successCount} attendees. {$errorCount} failed to send.");
+            }
+
+            return back()->with('success', "Pre-event messages sent successfully to {$successCount} attendees.");
+
+        } catch (\Exception $e) {
+            Log::error('Failed to send bulk pre-event messages', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return back()->with('error', 'Failed to send bulk pre-event messages. Please try again.');
+        }
     }
 }
