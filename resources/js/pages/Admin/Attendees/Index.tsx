@@ -1,11 +1,12 @@
 import AppLayout from '@/layouts/app-layout'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/components/ui/toast'
 import { Head, useForm, usePage } from '@inertiajs/react'
 import { PencilIcon, PlusIcon, Trash2Icon, MailIcon, BellIcon, UsersIcon, TicketIcon, Download, FileText, Table as TableIcon, Search, Loader2 } from 'lucide-react'
@@ -50,6 +51,39 @@ export default function AdminAttendeesIndex() {
   // Bulk action progress dialogs
   const [isBulkResendingTickets, setIsBulkResendingTickets] = useState(false)
   const [isBulkSendingReminders, setIsBulkSendingReminders] = useState(false)
+  const [isBulkSendingPreEvent, setIsBulkSendingPreEvent] = useState(false)
+  
+  // Pre-event message preview dialog
+  const [isPreEventPreviewOpen, setIsPreEventPreviewOpen] = useState(false)
+  const [preEventMessage, setPreEventMessage] = useState('')
+  const [preEventAttendeeId, setPreEventAttendeeId] = useState<number | null>(null)
+  const [preEventAttendeeName, setPreEventAttendeeName] = useState<string>('')
+  const [isBulkPreEvent, setIsBulkPreEvent] = useState(false)
+
+  // Default pre-event message template
+  const defaultPreEventMessage = `🎉 *You're Invited!*
+
+Dear *{name}*,
+
+🎊 *We're thrilled you're joining us!* Thank you for registering for the most exciting singles dinner event of the year!
+
+🎭 *Event Details:*
+• Date: Oct 31, 2025
+• Time: 6PM-12AM
+• Venue: The Boma Hotel, South C
+• Days Left: *{days}* days
+
+🚗 *Arrival & Check-in:*
+• Arrival Time: 5:30 PM - 6:30 PM
+• Check-in: Present ticket (PDF or QR code) at entrance
+• Parking: Free at The Boma Hotel
+• Dress Code: Elegant with a masquerade
+• Bring: Valid ID, ticket, and great attitude!
+
+🎫 *Your event ticket is attached!* Save this message and the PDF ticket. Show either at the event entrance.
+
+🌟 *Get ready for an unforgettable evening!*
+Prepare for amazing food, exciting conversations, and the chance to meet incredible people. Bring your best energy and be ready to create beautiful memories! 🎊`
 
   // Filter attendees based on search term
   const filteredAttendees = useMemo(() => {
@@ -70,8 +104,10 @@ export default function AdminAttendeesIndex() {
   const deleteForm = useForm({})
   const resendTicketForm = useForm({})
   const sendReminderForm = useForm({})
+  const sendPreEventForm = useForm({})
   const bulkSendRemindersForm = useForm({})
   const bulkResendTicketsForm = useForm({})
+  const bulkSendPreEventForm = useForm({})
 
   function submitDelete(id: number) {
     deleteForm.delete(route('admin.attendees.destroy', id), {
@@ -126,6 +162,21 @@ export default function AdminAttendeesIndex() {
     })
   }
 
+  function sendPreEvent(id: number, attendeeName?: string) {
+    const attendee = attendees.find(a => a.id === id)
+    const daysRemaining = Math.max(0, Math.ceil((new Date('2025-10-31').getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))
+    
+    const message = defaultPreEventMessage
+      .replace('{name}', attendeeName || 'Attendee')
+      .replace('{days}', daysRemaining.toString())
+    
+    setPreEventMessage(message)
+    setPreEventAttendeeId(id)
+    setPreEventAttendeeName(attendeeName || 'Unknown')
+    setIsBulkPreEvent(false)
+    setIsPreEventPreviewOpen(true)
+  }
+
   function bulkSendReminders() {
     // Show progress dialog
     setIsBulkSendingReminders(true)
@@ -158,6 +209,53 @@ export default function AdminAttendeesIndex() {
         toast({ title: 'Failed to resend bulk tickets', variant: 'destructive' })
       },
     })
+  }
+
+  function bulkSendPreEvent() {
+    const daysRemaining = Math.max(0, Math.ceil((new Date('2025-10-31').getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))
+    
+    const message = defaultPreEventMessage
+      .replace('{name}', 'Attendee')
+      .replace('{days}', daysRemaining.toString())
+    
+    setPreEventMessage(message)
+    setPreEventAttendeeId(null)
+    setPreEventAttendeeName('')
+    setIsBulkPreEvent(true)
+    setIsPreEventPreviewOpen(true)
+  }
+
+  function sendPreEventMessage() {
+    if (isBulkPreEvent) {
+      // Show progress dialog
+      setIsBulkSendingPreEvent(true)
+
+      bulkSendPreEventForm.post(route('admin.attendees.bulk-send-pre-event'), {
+        data: { custom_message: preEventMessage },
+        preserveScroll: true,
+        onSuccess: () => {
+          setIsBulkSendingPreEvent(false)
+          setIsPreEventPreviewOpen(false)
+          toast({ title: 'Pre-event messages sent successfully' })
+        },
+        onError: () => {
+          setIsBulkSendingPreEvent(false)
+          toast({ title: 'Failed to send pre-event messages', variant: 'destructive' })
+        },
+      })
+    } else if (preEventAttendeeId) {
+      sendPreEventForm.post(route('admin.attendees.send-pre-event', preEventAttendeeId), {
+        data: { custom_message: preEventMessage },
+        preserveScroll: true,
+        onSuccess: () => {
+          setIsPreEventPreviewOpen(false)
+          toast({ title: 'Pre-event message sent successfully' })
+        },
+        onError: () => {
+          toast({ title: 'Failed to send pre-event message', variant: 'destructive' })
+        },
+      })
+    }
   }
 
   function PaymentBadge({ total }: { total: number }) {
@@ -215,6 +313,11 @@ export default function AdminAttendeesIndex() {
                 <BulkResendTicketsButton 
                   onBulkResendTickets={bulkResendTickets}
                   processing={bulkResendTicketsForm.processing}
+                  attendees={filteredAttendees}
+                />
+                <BulkSendPreEventButton 
+                  onBulkSendPreEvent={bulkSendPreEvent}
+                  processing={bulkSendPreEventForm.processing}
                   attendees={filteredAttendees}
                 />
                 <CreateAttendeeModal />
@@ -292,6 +395,14 @@ export default function AdminAttendeesIndex() {
                         processing={resendTicketForm.processing}
                       />
                     )}
+                    {a.total_amount >= 4999 && (
+                      <SendPreEventButton 
+                        attendeeId={a.id} 
+                        attendeeName={a.name}
+                        onSendPreEvent={(id) => sendPreEvent(id, a.name)}
+                        processing={sendPreEventForm.processing}
+                      />
+                    )}
                     {a.total_amount < 4999 && (
                       <SendReminderButton 
                         attendeeId={a.id} 
@@ -358,6 +469,14 @@ export default function AdminAttendeesIndex() {
                     attendeeName={a.name}
                     onResend={(id) => resendTicket(id, a.name)}
                     processing={resendTicketForm.processing}
+                  />
+                )}
+                {a.total_amount >= 4999 && (
+                  <SendPreEventButton 
+                    attendeeId={a.id} 
+                    attendeeName={a.name}
+                    onSendPreEvent={(id) => sendPreEvent(id, a.name)}
+                    processing={sendPreEventForm.processing}
                   />
                 )}
                 {a.total_amount < 4999 && (
@@ -511,6 +630,17 @@ export default function AdminAttendeesIndex() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Pre-Event Message Preview Dialog */}
+        <PreEventMessagePreviewDialog
+          isOpen={isPreEventPreviewOpen}
+          onClose={() => setIsPreEventPreviewOpen(false)}
+          message={preEventMessage}
+          setMessage={setPreEventMessage}
+          attendeeName={preEventAttendeeName}
+          isBulk={isBulkPreEvent}
+          onSend={sendPreEventMessage}
+        />
       </div>
     </AppLayout>
   )
@@ -872,6 +1002,175 @@ function BulkResendTicketsButton({
           </Button>
           <Button onClick={handleBulkResendTickets} disabled={processing}>
             {processing ? 'Sending...' : `Resend to ${fullyPaidCount} Attendees`}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function SendPreEventButton({ 
+  attendeeId, 
+  attendeeName, 
+  onSendPreEvent, 
+  processing 
+}: { 
+  attendeeId: number
+  attendeeName: string
+  onSendPreEvent: (id: number) => void
+  processing: boolean
+}) {
+  const [open, setOpen] = useState(false)
+
+  function handleSendPreEvent() {
+    onSendPreEvent(attendeeId)
+    setOpen(false)
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="text-xs sm:text-sm">
+          <MailIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+          <span className="hidden sm:inline ml-1">Pre-Event</span>
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Send Pre-Event Message</DialogTitle>
+        </DialogHeader>
+        <div className="py-4">
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            Are you sure you want to send a pre-event message to <strong>{attendeeName}</strong>?
+          </p>
+          <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-2">
+            This will send an exciting pre-event message with arrival details and attach their ticket.
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSendPreEvent} disabled={processing}>
+            {processing ? 'Sending...' : 'Send Pre-Event Message'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function BulkSendPreEventButton({ 
+  onBulkSendPreEvent, 
+  processing, 
+  attendees 
+}: { 
+  onBulkSendPreEvent: () => void
+  processing: boolean
+  attendees: AttendeeRow[]
+}) {
+  const [open, setOpen] = useState(false)
+  
+  const fullyPaidCount = attendees.filter(a => a.total_amount >= 4999).length
+
+  function handleBulkSendPreEvent() {
+    onBulkSendPreEvent()
+    setOpen(false)
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" disabled={fullyPaidCount === 0} size="sm" className="text-xs sm:text-sm">
+          <MailIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+          <span className="hidden sm:inline">Pre-Event ({fullyPaidCount})</span>
+          <span className="sm:hidden">Pre-Event ({fullyPaidCount})</span>
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Send Bulk Pre-Event Messages</DialogTitle>
+        </DialogHeader>
+        <div className="py-4">
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            Are you sure you want to send pre-event messages to <strong>{fullyPaidCount} fully paid attendees</strong>?
+          </p>
+          <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-2">
+            This will send exciting pre-event messages with arrival details and attach tickets to all attendees who have fully paid (Ksh. 4,999 and above).
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleBulkSendPreEvent} disabled={processing}>
+            {processing ? 'Sending...' : `Send to ${fullyPaidCount} Attendees`}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function PreEventMessagePreviewDialog({ 
+  isOpen, 
+  onClose, 
+  message, 
+  setMessage, 
+  attendeeName, 
+  isBulk, 
+  onSend 
+}: { 
+  isOpen: boolean
+  onClose: () => void
+  message: string
+  setMessage: (message: string) => void
+  attendeeName: string
+  isBulk: boolean
+  onSend: () => void
+}) {
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <DialogTitle>Pre-Event Message Preview</DialogTitle>
+          <DialogDescription>
+            {isBulk 
+              ? 'Review and edit the pre-event message before sending to all fully paid attendees'
+              : `Review and edit the pre-event message for ${attendeeName}`
+            }
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="flex-1 overflow-hidden flex flex-col gap-4">
+          <div className="flex-1">
+            <Label htmlFor="message-preview">Message Content</Label>
+            <Textarea
+              id="message-preview"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              className="w-full h-64 resize-none font-mono text-sm"
+              placeholder="Enter your pre-event message..."
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Character count: {message.length}/2000
+            </p>
+          </div>
+          
+          <div className="border rounded-lg p-3 bg-gray-50 dark:bg-gray-800">
+            <Label className="text-sm font-medium mb-2 block">Preview (WhatsApp format)</Label>
+            <div className="text-sm whitespace-pre-wrap font-mono max-h-32 overflow-y-auto">
+              {message}
+            </div>
+          </div>
+        </div>
+        
+        <DialogFooter className="flex gap-2">
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={onSend} disabled={message.length === 0 || message.length > 2000}>
+            {isBulk ? 'Send to All Attendees' : 'Send Message'}
           </Button>
         </DialogFooter>
       </DialogContent>

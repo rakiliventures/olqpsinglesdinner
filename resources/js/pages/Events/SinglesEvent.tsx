@@ -130,9 +130,7 @@ export default function SinglesEvent() {
                           </div>
                           <div className="text-lg sm:text-xl md:text-2xl font-black text-yellow-500 mb-1">Ksh. 4,999</div>
                           <div className="text-yellow-300/90 text-xs sm:text-sm font-semibold">Per Person</div>
-                          <p className="text-yellow-300/70 text-xs mt-1 italic">
-                            Secure with Ksh. 1,000 minimum, and pay balance by 24th Oct.
-                          </p>
+      
                         </div>
                       </div>
                       
