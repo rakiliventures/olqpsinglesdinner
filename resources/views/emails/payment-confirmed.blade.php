@@ -267,7 +267,7 @@
             </div>
 
             <div class="message">
-                🎉 <strong>Congratulations!</strong> Your payment was confirmed for the OLQP Singles Dinner 2025!
+                🎉 <strong>Thank you for registering!</strong> We truly appreciate your participation in the OLQP Singles Dinner 2025!
             </div>
 
             <div class="payment-details">
@@ -384,12 +384,37 @@
                 </div>
             </div>
 
+            <div class="event-info">
+                <h3>🚗 Arrival & Check-in Information</h3>
+                <div class="detail-row">
+                    <span class="detail-label">Arrival Time:</span>
+                    <span class="detail-value">Please arrive between 5:30 PM - 6:30 PM</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Check-in Process:</span>
+                    <span class="detail-value">Present your ticket (PDF or QR code) at the entrance</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Parking:</span>
+                    <span class="detail-value">Free parking available at The Boma Hotel</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Dress Code:</span>
+                    <span class="detail-value">Elegant with a masquerade</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">What to Bring:</span>
+                    <span class="detail-value">Valid ID, your ticket, and a great attitude!</span>
+                </div>
+            </div>
+
             <div class="message">
                 @if($isFullyPaid)
                     <strong>🎫 Your Event Ticket is Attached!</strong><br>
                     Save this email and the attached PDF ticket. Show either at the event entrance. The ticket contains a QR code for quick verification.
                     <br><br>
-                    <strong>🎉 You're all set! We can't wait to see you at the event!</strong>
+                    <strong>🎉 We're excited to welcome you to an evening of fun, networking, and great experiences!</strong><br>
+                    Get ready for delicious food, engaging conversations, and memorable moments. Don't forget to bring your positive energy and be ready to make new connections!
                 @else
                     <strong>📧 Save this confirmation email</strong> - you may need to show it at the event entrance. Complete your payment (Ksh. {{ number_format($requiredAmount) }}) to receive your event ticket with QR code.
                     <br><br>
