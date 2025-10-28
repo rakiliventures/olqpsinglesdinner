@@ -200,7 +200,7 @@
 
             @if($daysRemaining <= 7)
                 <div class="urgency">
-                    <strong>URGENT:</strong> Only {{ $daysRemaining }} {{ $daysRemaining == 1 ? 'day' : 'days' }} remaining until the event! Please complete your payment immediately.
+                    <strong>URGENT:</strong> Only {{ $daysRemaining }} {{ $daysRemaining == 1 ? 'day' : 'days' }} remaining until the event! Please complete your payment, thanks.
                 </div>
             @elseif($daysRemaining <= 14)
                 <div class="urgency">
