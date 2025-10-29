@@ -194,7 +194,7 @@
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Time:</span>
-                    <span class="detail-value">6PM-12AM</span>
+                    <span class="detail-value">6:30PM-10:30PM</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Venue:</span>
