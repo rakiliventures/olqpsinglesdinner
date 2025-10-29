@@ -661,6 +661,9 @@ class AttendeesController extends Controller
                 'custom_message' => ['nullable', 'string', 'max:2000'],
             ]);
             
+            // Add small delay to show progress dialog
+            usleep(500000); // 0.5 seconds
+            
             // Load attendee with payments, event, and group ticket
             $attendee = $attendee->load(['payments', 'event', 'groupTicket']);
             

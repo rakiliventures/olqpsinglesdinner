@@ -59,6 +59,9 @@ export default function AdminAttendeesIndex() {
   const [preEventAttendeeId, setPreEventAttendeeId] = useState<number | null>(null)
   const [preEventAttendeeName, setPreEventAttendeeName] = useState<string>('')
   const [isBulkPreEvent, setIsBulkPreEvent] = useState(false)
+  
+  // Pre-event email sending progress
+  const [isSendingPreEventEmails, setIsSendingPreEventEmails] = useState(false)
 
   // Default pre-event message template
   const defaultPreEventMessage = `Dear *{name}*,
@@ -226,29 +229,36 @@ We look forward to an evening of great food, good conversations, and meeting new
     if (isBulkPreEvent) {
       // Show progress dialog
       setIsBulkSendingPreEvent(true)
+      setIsSendingPreEventEmails(true)
 
       bulkSendPreEventForm.post(route('admin.attendees.bulk-send-pre-event'), {
         data: { custom_message: preEventMessage },
         preserveScroll: true,
         onSuccess: () => {
           setIsBulkSendingPreEvent(false)
+          setIsSendingPreEventEmails(false)
           setIsPreEventPreviewOpen(false)
           toast({ title: 'Pre-event messages sent successfully' })
         },
         onError: () => {
           setIsBulkSendingPreEvent(false)
+          setIsSendingPreEventEmails(false)
           toast({ title: 'Failed to send pre-event messages', variant: 'destructive' })
         },
       })
     } else if (preEventAttendeeId) {
+      setIsSendingPreEventEmails(true)
+      
       sendPreEventForm.post(route('admin.attendees.send-pre-event', preEventAttendeeId), {
         data: { custom_message: preEventMessage },
         preserveScroll: true,
         onSuccess: () => {
+          setIsSendingPreEventEmails(false)
           setIsPreEventPreviewOpen(false)
           toast({ title: 'Pre-event message sent successfully' })
         },
         onError: () => {
+          setIsSendingPreEventEmails(false)
           toast({ title: 'Failed to send pre-event message', variant: 'destructive' })
         },
       })
@@ -638,6 +648,33 @@ We look forward to an evening of great food, good conversations, and meeting new
           isBulk={isBulkPreEvent}
           onSend={sendPreEventMessage}
         />
+
+        {/* Progress Dialog for Pre-Event Email Sending */}
+        <Dialog open={isSendingPreEventEmails} onOpenChange={() => {}}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Sending Pre-Event Messages
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <div className="flex items-center gap-3">
+                <div className="flex-1">
+                  <div className="text-sm text-neutral-600 dark:text-neutral-400 mb-2">
+                    {isBulkPreEvent 
+                      ? 'Sending pre-event messages to all fully paid attendees...'
+                      : `Sending pre-event message to ${preEventAttendeeName}...`
+                    }
+                  </div>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div className="bg-blue-600 h-2 rounded-full animate-pulse" style={{ width: '100%' }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   )
