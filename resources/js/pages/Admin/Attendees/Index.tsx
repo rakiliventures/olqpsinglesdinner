@@ -70,7 +70,7 @@ export default function AdminAttendeesIndex() {
 
 🎭 *Event Details:*
 • Date: Oct 31, 2025
-• Time: 6PM-12AM
+• Time: 6:30PM-10:30PM
 • Venue: The Boma Hotel, South C
 • Days Left: *{days}* days
 

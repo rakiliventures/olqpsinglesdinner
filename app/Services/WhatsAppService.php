@@ -158,7 +158,7 @@ class WhatsAppService
 
         $message .= "\n🎭 *Event Details:*\n";
         $message .= "• Date: Oct 31, 2025\n";
-        $message .= "• Time: 6PM-12AM\n";
+        $message .= "• Time: 6:30PM-10:30PM\n";
         $message .= "• Venue: The Boma Hotel, South C\n";
         $message .= "• Days Left: *{$daysRemaining}* " . ($daysRemaining == 1 ? 'day' : 'days') . "\n\n";
         
@@ -466,7 +466,7 @@ class WhatsAppService
             // Build compact reminder message
             $message = "🔔 *Payment Reminder - OLQP Singles Dinner 2025*\n\n";
             $message .= "Hi *{$attendee->name}*,\n\n";
-            $message .= "📅 *Event:* Oct 31, 2025 | 6PM-12AM | The Boma Hotel, South C\n";
+            $message .= "📅 *Event:* Oct 31, 2025 | 6:30PM-10:30PM | The Boma Hotel, South C\n";
             $message .= "🎫 *Ticket:* {$ticketType} | ID: {$attendee->id}\n\n";
             $message .= "💰 *Payment Status:*\n";
             $message .= "• Paid: Ksh. " . number_format($totalPaid) . "\n";
@@ -557,7 +557,7 @@ class WhatsAppService
             
             $message .= "🎭 *Event Details:*\n";
             $message .= "• Date: Oct 31, 2025\n";
-            $message .= "• Time: 6PM-12AM\n";
+            $message .= "• Time: 6:30PM-10:30PM\n";
             $message .= "• Venue: The Boma Hotel, South C\n";
             $message .= "• Days Left: *{$daysRemaining}* " . ($daysRemaining == 1 ? 'day' : 'days') . "\n\n";
             
