@@ -61,11 +61,9 @@ export default function AdminAttendeesIndex() {
   const [isBulkPreEvent, setIsBulkPreEvent] = useState(false)
 
   // Default pre-event message template
-  const defaultPreEventMessage = `🎉 *You're Invited!*
+  const defaultPreEventMessage = `Dear *{name}*,
 
-Dear *{name}*,
-
-🎊 *We're thrilled you're joining us!* Thank you for registering for the most exciting singles dinner event of the year!
+*Thank you for registering for the Singles Dinner scheduled for October 31st.* We look forward to hosting you for an evening of fun and networking. Please find below the event details for your reference!
 
 🎭 *Event Details:*
 • Date: Oct 31, 2025
@@ -74,16 +72,15 @@ Dear *{name}*,
 • Days Left: *{days}* days
 
 🚗 *Arrival & Check-in:*
-• Arrival Time: 5:30 PM - 6:30 PM
-• Check-in: Present ticket (PDF or QR code) at entrance
-• Parking: Free at The Boma Hotel
-• Dress Code: Elegant with a masquerade
-• Bring: Valid ID, ticket, and great attitude!
+• Arrival Time: 6:00 PM - 6:30 PM. Kick-off at 6:35 PM
+• Check-in: Present ticket (PDF or QR code) at venue entrance
+• Parking: Complimentary parking available at The Boma Hotel
+• Dress Code: Elegant attire with a masquerade touch
+• What to Bring: Valid ID, your ticket, and great energy!
 
-🎫 *Your event ticket is attached!* Save this message and the PDF ticket. Show either at the event entrance.
+🎫 *Your ticket* Your event ticket is attached to this email. Please save it and present either the PDF or QR code at the entrance.
 
-🌟 *Get ready for an unforgettable evening!*
-Prepare for amazing food, exciting conversations, and the chance to meet incredible people. Bring your best energy and be ready to create beautiful memories! 🎊`
+We look forward to an evening of great food, good conversations, and meeting new people.`
 
   // Filter attendees based on search term
   const filteredAttendees = useMemo(() => {

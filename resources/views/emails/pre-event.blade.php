@@ -168,17 +168,17 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎉 You're Invited!</h1>
+            <h1>Welcome to the Singles Dinner!</h1>
             <div class="subtitle">OLQP Singles Dinner 2025</div>
         </div>
 
         <div class="content">
             <div class="greeting">
-                Dear {{ $attendee->name }},
+                Dear <strong>{{ $attendee->name }}</strong>,
             </div>
 
             <div class="message">
-                🎊 <strong>We're thrilled you're joining us!</strong> Thank you for registering for the most exciting singles dinner event of the year!
+                <strong>Thank you for registering for the Singles Dinner scheduled for October 31st.</strong> We look forward to hosting you for an evening of fun and networking. Please find below the event details for your reference!
             </div>
 
             @php
@@ -189,23 +189,19 @@
             <div class="event-info">
                 <h3>🎭 Event Details</h3>
                 <div class="detail-row">
-                    <span class="detail-label">Event:</span>
-                    <span class="detail-value">{{ $event->name }}</span>
-                </div>
-                <div class="detail-row">
                     <span class="detail-label">Date:</span>
-                    <span class="detail-value">October 31, 2025</span>
+                    <span class="detail-value">Oct 31, 2025</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Time:</span>
-                    <span class="detail-value">6:00 PM - 12:00 AM</span>
+                    <span class="detail-value">6PM-12AM</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Venue:</span>
                     <span class="detail-value">The Boma Hotel, South C</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label">Days Remaining:</span>
+                    <span class="detail-label">Days Left:</span>
                     <span class="detail-value" style="color: #28a745; font-weight: bold;">{{ $daysRemaining }} {{ $daysRemaining == 1 ? 'day' : 'days' }}</span>
                 </div>
             </div>
@@ -214,32 +210,30 @@
                 <h3>🚗 Arrival & Check-in</h3>
                 <div class="detail-row">
                     <span class="detail-label">Arrival Time:</span>
-                    <span class="detail-value">Please arrive between 5:30 PM - 6:30 PM</span>
+                    <span class="detail-value">6:00 PM - 6:30 PM. Kick-off at 6:35 PM</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label">Check-in Process:</span>
-                    <span class="detail-value">Present your ticket (PDF or QR code) at the entrance</span>
+                    <span class="detail-label">Check-in:</span>
+                    <span class="detail-value">Present ticket (PDF or QR code) at venue entrance</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Parking:</span>
-                    <span class="detail-value">Free parking available at The Boma Hotel</span>
+                    <span class="detail-value">Complimentary parking available at The Boma Hotel</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Dress Code:</span>
-                    <span class="detail-value">Elegant with a masquerade</span>
+                    <span class="detail-value">Elegant attire with a masquerade touch</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">What to Bring:</span>
-                    <span class="detail-value">Valid ID, your ticket, and a great attitude!</span>
+                    <span class="detail-value">Valid ID, your ticket, and great energy!</span>
                 </div>
             </div>
 
             <div class="message">
-                <strong>🎫 Your Event Ticket is Attached!</strong><br>
-                Save this email and the attached PDF ticket. Show either at the event entrance. The ticket contains a QR code for quick verification.
+                <strong>🎫 Your ticket</strong> Your event ticket is attached to this email. Please save it and present either the PDF or QR code at the entrance.
                 <br><br>
-                <strong>🌟 Get ready for an unforgettable evening!</strong><br>
-                Prepare for amazing food, exciting conversations, and the chance to meet incredible people. Bring your best energy and be ready to create beautiful memories!
+                We look forward to an evening of great food, good conversations, and meeting new people.
             </div>
 
             <div class="contact-info">

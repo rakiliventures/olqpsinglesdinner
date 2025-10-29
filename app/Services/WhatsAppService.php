@@ -551,9 +551,8 @@ class WhatsAppService
             if ($customMessage) {
                 $message = $customMessage;
             } else {
-                $message = "🎉 *You're Invited!*\n\n";
-                $message .= "Dear *{$attendee->name}*,\n\n";
-                $message .= "🎊 *We're thrilled you're joining us!* Thank you for registering for the most exciting singles dinner event of the year!\n\n";
+                $message = "Dear *{$attendee->name}*,\n\n";
+                $message .= "*Thank you for registering for the Singles Dinner scheduled for October 31st.* We look forward to hosting you for an evening of fun and networking. Please find below the event details for your reference!\n\n";
             }
             
             $message .= "🎭 *Event Details:*\n";
@@ -563,44 +562,81 @@ class WhatsAppService
             $message .= "• Days Left: *{$daysRemaining}* " . ($daysRemaining == 1 ? 'day' : 'days') . "\n\n";
             
             $message .= "🚗 *Arrival & Check-in:*\n";
-            $message .= "• Arrival Time: 5:30 PM - 6:30 PM\n";
-            $message .= "• Check-in: Present ticket (PDF or QR code) at entrance\n";
-            $message .= "• Parking: Free at The Boma Hotel\n";
-            $message .= "• Dress Code: Elegant with a masquerade\n";
-            $message .= "• Bring: Valid ID, ticket, and great attitude!\n\n";
+            $message .= "• Arrival Time: 6:00 PM - 6:30 PM. Kick-off at 6:35 PM\n";
+            $message .= "• Check-in: Present ticket (PDF or QR code) at venue entrance\n";
+            $message .= "• Parking: Complimentary parking available at The Boma Hotel\n";
+            $message .= "• Dress Code: Elegant attire with a masquerade touch\n";
+            $message .= "• What to Bring: Valid ID, your ticket, and great energy!\n\n";
             
-            $message .= "🎫 *Your event ticket is attached!* Save this message and the PDF ticket. Show either at the event entrance.\n\n";
-            $message .= "🌟 *Get ready for an unforgettable evening!*\n";
-            $message .= "Prepare for amazing food, exciting conversations, and the chance to meet incredible people. Bring your best energy and be ready to create beautiful memories! 🎊";
+            $message .= "🎫 *Your ticket* Your event ticket is attached to this email. Please save it and present either the PDF or QR code at the entrance.\n\n";
+            $message .= "We look forward to an evening of great food, good conversations, and meeting new people.";
             
-            $response = Http::timeout(10)->post($this->apiUrl, [
-                'messaging_product' => 'whatsapp',
-                'to' => $attendee->whatsapp,
-                'type' => 'text',
-                'text' => [
-                    'body' => $message
-                ]
-            ], [
-                'Authorization' => 'Bearer ' . $this->accessToken,
-                'Content-Type' => 'application/json'
-            ]);
-            
-            if ($response->successful()) {
-                Log::info('Pre-event WhatsApp message sent successfully', [
+            // Generate PDF ticket and send with attachment
+            try {
+                $ticketPdfService = app(\App\Services\TicketPdfService::class);
+                $pdfContent = $ticketPdfService->generateTicketPdf($attendee, $attendee->payments->where('status', 'confirmed')->first());
+                
+                // Save PDF to temporary file
+                $tempFile = tempnam(sys_get_temp_dir(), 'ticket_') . '.pdf';
+                file_put_contents($tempFile, $pdfContent);
+                
+                $success = $this->sendMessageWithAttachment($attendee->whatsapp, $message, $tempFile);
+                
+                // Clean up temporary file
+                unlink($tempFile);
+                
+                if ($success) {
+                    Log::info('Pre-event WhatsApp message with ticket sent successfully', [
+                        'attendee_id' => $attendee->id,
+                        'attendee_name' => $attendee->name,
+                        'attendee_whatsapp' => $attendee->whatsapp,
+                        'ticket_type' => $ticketType,
+                        'days_remaining' => $daysRemaining
+                    ]);
+                    return true;
+                } else {
+                    Log::error('Failed to send pre-event WhatsApp message with ticket', [
+                        'attendee_id' => $attendee->id,
+                        'attendee_whatsapp' => $attendee->whatsapp
+                    ]);
+                    return false;
+                }
+            } catch (\Exception $e) {
+                Log::error('Exception generating ticket PDF for pre-event WhatsApp', [
                     'attendee_id' => $attendee->id,
-                    'attendee_name' => $attendee->name,
-                    'attendee_whatsapp' => $attendee->whatsapp,
-                    'ticket_type' => $ticketType,
-                    'days_remaining' => $daysRemaining
+                    'error' => $e->getMessage()
                 ]);
-                return true;
-            } else {
-                Log::error('Failed to send pre-event WhatsApp message', [
-                    'attendee_id' => $attendee->id,
-                    'response' => $response->body(),
-                    'status' => $response->status()
+                
+                // Fallback to text-only message
+                $response = Http::timeout(10)->post($this->apiUrl, [
+                    'messaging_product' => 'whatsapp',
+                    'to' => $attendee->whatsapp,
+                    'type' => 'text',
+                    'text' => [
+                        'body' => $message
+                    ]
+                ], [
+                    'Authorization' => 'Bearer ' . $this->apiKey,
+                    'Content-Type' => 'application/json'
                 ]);
-                return false;
+                
+                if ($response->successful()) {
+                    Log::info('Pre-event WhatsApp message sent successfully (text-only fallback)', [
+                        'attendee_id' => $attendee->id,
+                        'attendee_name' => $attendee->name,
+                        'attendee_whatsapp' => $attendee->whatsapp,
+                        'ticket_type' => $ticketType,
+                        'days_remaining' => $daysRemaining
+                    ]);
+                    return true;
+                } else {
+                    Log::error('Failed to send pre-event WhatsApp message (text-only fallback)', [
+                        'attendee_id' => $attendee->id,
+                        'response' => $response->body(),
+                        'status' => $response->status()
+                    ]);
+                    return false;
+                }
             }
             
         } catch (\Exception $e) {
