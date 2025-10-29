@@ -238,12 +238,12 @@ We look forward to an evening of great food, good conversations, and meeting new
           setIsBulkSendingPreEvent(false)
           setIsSendingPreEventEmails(false)
           setIsPreEventPreviewOpen(false)
-          toast({ title: 'Pre-event messages sent successfully' })
+          toast({ title: 'Pre-event emails sent successfully' })
         },
         onError: () => {
           setIsBulkSendingPreEvent(false)
           setIsSendingPreEventEmails(false)
-          toast({ title: 'Failed to send pre-event messages', variant: 'destructive' })
+          toast({ title: 'Failed to send pre-event emails', variant: 'destructive' })
         },
       })
     } else if (preEventAttendeeId) {
@@ -255,11 +255,11 @@ We look forward to an evening of great food, good conversations, and meeting new
         onSuccess: () => {
           setIsSendingPreEventEmails(false)
           setIsPreEventPreviewOpen(false)
-          toast({ title: 'Pre-event message sent successfully' })
+          toast({ title: 'Pre-event email sent successfully' })
         },
         onError: () => {
           setIsSendingPreEventEmails(false)
-          toast({ title: 'Failed to send pre-event message', variant: 'destructive' })
+          toast({ title: 'Failed to send pre-event email', variant: 'destructive' })
         },
       })
     }
@@ -655,7 +655,7 @@ We look forward to an evening of great food, good conversations, and meeting new
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Sending Pre-Event Messages
+                Sending Pre-Event Emails
               </DialogTitle>
             </DialogHeader>
             <div className="py-4">
@@ -663,8 +663,8 @@ We look forward to an evening of great food, good conversations, and meeting new
                 <div className="flex-1">
                   <div className="text-sm text-neutral-600 dark:text-neutral-400 mb-2">
                     {isBulkPreEvent 
-                      ? 'Sending pre-event messages to all fully paid attendees...'
-                      : `Sending pre-event message to ${preEventAttendeeName}...`
+                      ? 'Sending pre-event emails to all fully paid attendees...'
+                      : `Sending pre-event email to ${preEventAttendeeName}...`
                     }
                   </div>
                   <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
@@ -1066,16 +1066,16 @@ function SendPreEventButton({
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="text-xs sm:text-sm">
           <MailIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-          <span className="hidden sm:inline ml-1">Pre-Event</span>
+          <span className="hidden sm:inline ml-1">Pre-Event Email</span>
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Send Pre-Event Message</DialogTitle>
+          <DialogTitle>Send Pre-Event Email</DialogTitle>
         </DialogHeader>
         <div className="py-4">
           <p className="text-sm text-neutral-600 dark:text-neutral-400">
-            Are you sure you want to send a pre-event message to <strong>{attendeeName}</strong>?
+            Are you sure you want to send a pre-event email to <strong>{attendeeName}</strong>?
           </p>
           <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-2">
             This will send an exciting pre-event message with arrival details and attach their ticket.
@@ -1086,7 +1086,7 @@ function SendPreEventButton({
             Cancel
           </Button>
           <Button onClick={handleSendPreEvent} disabled={processing}>
-            {processing ? 'Sending...' : 'Send Pre-Event Message'}
+            {processing ? 'Sending...' : 'Send Pre-Event Email'}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -1117,17 +1117,17 @@ function BulkSendPreEventButton({
       <DialogTrigger asChild>
         <Button variant="outline" disabled={fullyPaidCount === 0} size="sm" className="text-xs sm:text-sm">
           <MailIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-          <span className="hidden sm:inline">Pre-Event ({fullyPaidCount})</span>
-          <span className="sm:hidden">Pre-Event ({fullyPaidCount})</span>
+          <span className="hidden sm:inline">Pre-Event Email ({fullyPaidCount})</span>
+          <span className="sm:hidden">Pre-Event Email ({fullyPaidCount})</span>
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Send Bulk Pre-Event Messages</DialogTitle>
+          <DialogTitle>Send Bulk Pre-Event Emails</DialogTitle>
         </DialogHeader>
         <div className="py-4">
           <p className="text-sm text-neutral-600 dark:text-neutral-400">
-            Are you sure you want to send pre-event messages to <strong>{fullyPaidCount} fully paid attendees</strong>?
+            Are you sure you want to send pre-event emails to <strong>{fullyPaidCount} fully paid attendees</strong>?
           </p>
           <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-2">
             This will send exciting pre-event messages with arrival details and attach tickets to all attendees who have fully paid (Ksh. 4,999 and above).
@@ -1138,7 +1138,7 @@ function BulkSendPreEventButton({
             Cancel
           </Button>
           <Button onClick={handleBulkSendPreEvent} disabled={processing}>
-            {processing ? 'Sending...' : `Send to ${fullyPaidCount} Attendees`}
+            {processing ? 'Sending...' : `Send Emails to ${fullyPaidCount} Attendees`}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -1167,11 +1167,11 @@ function PreEventMessagePreviewDialog({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>Pre-Event Message Preview</DialogTitle>
+          <DialogTitle>Pre-Event Email Preview</DialogTitle>
           <DialogDescription>
             {isBulk 
-              ? 'Review and edit the pre-event message before sending to all fully paid attendees'
-              : `Review and edit the pre-event message for ${attendeeName}`
+              ? 'Review and edit the pre-event email before sending to all fully paid attendees'
+              : `Review and edit the pre-event email for ${attendeeName}`
             }
           </DialogDescription>
         </DialogHeader>
@@ -1204,7 +1204,7 @@ function PreEventMessagePreviewDialog({
             Cancel
           </Button>
           <Button onClick={onSend} disabled={message.length === 0 || message.length > 2000}>
-            {isBulk ? 'Send to All Attendees' : 'Send Message'}
+                      {isBulk ? 'Send Emails to All Attendees' : 'Send Email'}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -68,8 +68,15 @@ class PreEventMail extends Mailable
     public function attachments(): array
     {
         try {
-            // Generate the PDF ticket
-            $pdfContent = $this->ticketPdfService->generateTicketPdf($this->attendee, $this->payment);
+            // Generate the PDF ticket content directly
+            $pdfContent = $this->ticketPdfService->generateTicketPdfContent($this->attendee, $this->payment);
+            
+            if (!$pdfContent) {
+                Log::warning('PDF content not generated', [
+                    'attendee_id' => $this->attendee->id
+                ]);
+                return [];
+            }
             
             return [
                 Attachment::fromData(
@@ -81,7 +88,8 @@ class PreEventMail extends Mailable
             // Log the error but don't fail the email sending
             Log::error('Failed to generate ticket PDF for pre-event email', [
                 'attendee_id' => $this->attendee->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
             
             return [];

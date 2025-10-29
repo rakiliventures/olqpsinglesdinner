@@ -574,7 +574,14 @@ class WhatsAppService
             // Generate PDF ticket and send with attachment
             try {
                 $ticketPdfService = app(\App\Services\TicketPdfService::class);
-                $pdfContent = $ticketPdfService->generateTicketPdf($attendee, $attendee->payments->where('status', 'confirmed')->first());
+                $pdfContent = $ticketPdfService->generateTicketPdfContent($attendee, $attendee->payments->where('status', 'confirmed')->first());
+                
+                if (!$pdfContent) {
+                    Log::warning('PDF content not generated for WhatsApp', [
+                        'attendee_id' => $attendee->id
+                    ]);
+                    throw new \Exception('PDF content not generated');
+                }
                 
                 // Save PDF to temporary file
                 $tempFile = tempnam(sys_get_temp_dir(), 'ticket_') . '.pdf';

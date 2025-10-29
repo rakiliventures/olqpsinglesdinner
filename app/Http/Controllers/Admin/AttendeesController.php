@@ -695,9 +695,6 @@ class AttendeesController extends Controller
                         // Send email
                         Mail::to($groupAttendee->email)->send(new PreEventMail($latestPayment, $groupAttendee));
                         
-                        // Send WhatsApp
-                        $this->whatsappService->sendPreEventMessage($groupAttendee, $validated['custom_message'] ?? null);
-                        
                         $successCount++;
                     } catch (\Exception $e) {
                         $errorCount++;
@@ -715,16 +712,13 @@ class AttendeesController extends Controller
                 ]);
                 
                 if ($errorCount > 0) {
-                    return back()->with('warning', "Pre-event messages sent to {$successCount} attendees. {$errorCount} failed to send.");
+                    return back()->with('warning', "Pre-event emails sent to {$successCount} attendees. {$errorCount} failed to send.");
                 }
                 
-                return back()->with('success', "Pre-event messages sent successfully to {$successCount} attendees.");
+                return back()->with('success', "Pre-event emails sent successfully to {$successCount} attendees.");
             } else {
                 // This is an individual ticket
                 Mail::to($attendee->email)->send(new PreEventMail($latestPayment, $attendee));
-                
-                // Send WhatsApp
-                $this->whatsappService->sendPreEventMessage($attendee, $validated['custom_message'] ?? null);
                 
                 Log::info('Pre-event message sent successfully', [
                     'attendee_id' => $attendee->id,
@@ -732,7 +726,7 @@ class AttendeesController extends Controller
                     'attendee_email' => $attendee->email
                 ]);
                 
-                return back()->with('success', 'Pre-event message sent successfully to ' . $attendee->email);
+                return back()->with('success', 'Pre-event email sent successfully to ' . $attendee->email);
             }
             
         } catch (\Exception $e) {
@@ -742,7 +736,7 @@ class AttendeesController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
             
-            return back()->with('error', 'Failed to send pre-event message. Please try again.');
+            return back()->with('error', 'Failed to send pre-event email. Please try again.');
         }
     }
 
@@ -813,9 +807,6 @@ class AttendeesController extends Controller
                                 // Send email
                                 Mail::to($groupAttendee->email)->send(new PreEventMail($latestPayment, $groupAttendee));
                                 
-                                // Send WhatsApp
-                                $this->whatsappService->sendPreEventMessage($groupAttendee, $validated['custom_message'] ?? null);
-                                
                                 $groupSuccessCount++;
                             } catch (\Exception $e) {
                                 $groupErrorCount++;
@@ -832,9 +823,6 @@ class AttendeesController extends Controller
                     } else {
                         // Individual ticket
                         Mail::to($attendee->email)->send(new PreEventMail($latestPayment, $attendee));
-                        
-                        // Send WhatsApp
-                        $this->whatsappService->sendPreEventMessage($attendee, $validated['custom_message'] ?? null);
                         
                         $successCount++;
                     }
@@ -855,10 +843,10 @@ class AttendeesController extends Controller
             ]);
 
             if ($errorCount > 0) {
-                return back()->with('warning', "Pre-event messages sent to {$successCount} attendees. {$errorCount} failed to send.");
+                return back()->with('warning', "Pre-event emails sent to {$successCount} attendees. {$errorCount} failed to send.");
             }
 
-            return back()->with('success', "Pre-event messages sent successfully to {$successCount} attendees.");
+            return back()->with('success', "Pre-event emails sent successfully to {$successCount} attendees.");
 
         } catch (\Exception $e) {
             Log::error('Failed to send bulk pre-event messages', [
@@ -866,7 +854,7 @@ class AttendeesController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
 
-            return back()->with('error', 'Failed to send bulk pre-event messages. Please try again.');
+            return back()->with('error', 'Failed to send bulk pre-event emails. Please try again.');
         }
     }
 }

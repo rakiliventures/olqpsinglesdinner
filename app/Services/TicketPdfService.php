@@ -117,4 +117,79 @@ class TicketPdfService
             ]);
         }
     }
+    
+    public function generateTicketPdfContent(Attendee $attendee, Payment $payment): ?string
+    {
+        try {
+            // Load attendee with all payments and group ticket
+            $attendee = $attendee->load(['payments', 'groupTicket']);
+            
+            // Check if attendee is fully paid using the model method
+            if (!$attendee->isFullyPaid()) {
+                Log::info('Ticket not generated - attendee not fully paid', [
+                    'attendee_id' => $attendee->id,
+                    'required_amount' => $attendee->getRequiredAmount(),
+                    'is_group_ticket' => $attendee->group_ticket_id ? true : false
+                ]);
+                return null;
+            }
+            
+            // Calculate total confirmed amount for display
+            $totalConfirmedAmount = $attendee->payments
+                ->where('status', 'confirmed')
+                ->sum('amount');
+            
+            // Determine ticket type
+            $ticketType = $attendee->group_ticket_id ? 'Group-of-5' : 'Individual';
+            
+            // Generate QR code data
+            $qrData = json_encode([
+                'ticket_number' => $attendee->id,
+                'attendee_name' => $attendee->name,
+                'ticket_type' => $ticketType,
+                'total_confirmed' => $totalConfirmedAmount,
+                'event' => 'OLQP Singles Dinner 2025'
+            ]);
+            
+            // Generate QR code as SVG (doesn't require Imagick)
+            $qrCode = QrCode::format('svg')
+                ->size(150)
+                ->margin(2)
+                ->errorCorrection('H')
+                ->generate($qrData);
+            
+            // Convert SVG to base64 for PDF
+            $qrCodeBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrCode);
+
+            // Prepare data for PDF
+            $data = [
+                'attendee' => $attendee,
+                'payment' => $payment,
+                'event' => $attendee->event,
+                'totalConfirmedAmount' => $totalConfirmedAmount,
+                'qrCodeBase64' => $qrCodeBase64,
+                'qrData' => $qrData,
+                'ticketType' => $ticketType
+            ];
+            
+            // Generate PDF and return content directly
+            $pdf = Pdf::loadView('pdfs.event-ticket', $data);
+            $pdf->setPaper('A4', 'portrait');
+            
+            Log::info('Ticket PDF content generated successfully', [
+                'attendee_id' => $attendee->id,
+                'ticket_type' => $ticketType
+            ]);
+            
+            return $pdf->output();
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to generate ticket PDF content', [
+                'attendee_id' => $attendee->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return null;
+        }
+    }
 }
