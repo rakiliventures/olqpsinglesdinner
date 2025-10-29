@@ -59,31 +59,31 @@ export default function AdminAttendeesIndex() {
   const [preEventAttendeeId, setPreEventAttendeeId] = useState<number | null>(null)
   const [preEventAttendeeName, setPreEventAttendeeName] = useState<string>('')
   const [isBulkPreEvent, setIsBulkPreEvent] = useState(false)
+  
+  // Pre-event email sending progress
+  const [isSendingPreEventEmails, setIsSendingPreEventEmails] = useState(false)
 
   // Default pre-event message template
-  const defaultPreEventMessage = `🎉 *You're Invited!*
+  const defaultPreEventMessage = `Dear *{name}*,
 
-Dear *{name}*,
-
-🎊 *We're thrilled you're joining us!* Thank you for registering for the most exciting singles dinner event of the year!
+*Thank you for registering for the Singles Dinner scheduled for October 31st.* We look forward to hosting you for an evening of fun and networking. Please find below the event details for your reference!
 
 🎭 *Event Details:*
 • Date: Oct 31, 2025
-• Time: 6PM-12AM
+• Time: 6:30PM-10:30PM
 • Venue: The Boma Hotel, South C
 • Days Left: *{days}* days
 
 🚗 *Arrival & Check-in:*
-• Arrival Time: 5:30 PM - 6:30 PM
-• Check-in: Present ticket (PDF or QR code) at entrance
-• Parking: Free at The Boma Hotel
-• Dress Code: Elegant with a masquerade
-• Bring: Valid ID, ticket, and great attitude!
+• Arrival Time: 6:00 PM - 6:30 PM. Kick-off at 6:35 PM
+• Check-in: Present ticket (PDF or QR code) at venue entrance
+• Parking: Complimentary parking available at The Boma Hotel
+• Dress Code: Elegant attire with a masquerade touch
+• What to Bring: Valid ID, your ticket, and great energy!
 
-🎫 *Your event ticket is attached!* Save this message and the PDF ticket. Show either at the event entrance.
+🎫 *Your ticket* Your event ticket is attached to this email. Please save it and present either the PDF or QR code at the entrance.
 
-🌟 *Get ready for an unforgettable evening!*
-Prepare for amazing food, exciting conversations, and the chance to meet incredible people. Bring your best energy and be ready to create beautiful memories! 🎊`
+We look forward to an evening of great food, good conversations, and meeting new people.`
 
   // Filter attendees based on search term
   const filteredAttendees = useMemo(() => {
@@ -229,30 +229,37 @@ Prepare for amazing food, exciting conversations, and the chance to meet incredi
     if (isBulkPreEvent) {
       // Show progress dialog
       setIsBulkSendingPreEvent(true)
+      setIsSendingPreEventEmails(true)
 
       bulkSendPreEventForm.post(route('admin.attendees.bulk-send-pre-event'), {
         data: { custom_message: preEventMessage },
         preserveScroll: true,
         onSuccess: () => {
           setIsBulkSendingPreEvent(false)
+          setIsSendingPreEventEmails(false)
           setIsPreEventPreviewOpen(false)
-          toast({ title: 'Pre-event messages sent successfully' })
+          toast({ title: 'Pre-event emails sent successfully' })
         },
         onError: () => {
           setIsBulkSendingPreEvent(false)
-          toast({ title: 'Failed to send pre-event messages', variant: 'destructive' })
+          setIsSendingPreEventEmails(false)
+          toast({ title: 'Failed to send pre-event emails', variant: 'destructive' })
         },
       })
     } else if (preEventAttendeeId) {
+      setIsSendingPreEventEmails(true)
+      
       sendPreEventForm.post(route('admin.attendees.send-pre-event', preEventAttendeeId), {
         data: { custom_message: preEventMessage },
         preserveScroll: true,
         onSuccess: () => {
+          setIsSendingPreEventEmails(false)
           setIsPreEventPreviewOpen(false)
-          toast({ title: 'Pre-event message sent successfully' })
+          toast({ title: 'Pre-event email sent successfully' })
         },
         onError: () => {
-          toast({ title: 'Failed to send pre-event message', variant: 'destructive' })
+          setIsSendingPreEventEmails(false)
+          toast({ title: 'Failed to send pre-event email', variant: 'destructive' })
         },
       })
     }
@@ -641,6 +648,33 @@ Prepare for amazing food, exciting conversations, and the chance to meet incredi
           isBulk={isBulkPreEvent}
           onSend={sendPreEventMessage}
         />
+
+        {/* Progress Dialog for Pre-Event Email Sending */}
+        <Dialog open={isSendingPreEventEmails} onOpenChange={() => {}}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Sending Pre-Event Emails
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <div className="flex items-center gap-3">
+                <div className="flex-1">
+                  <div className="text-sm text-neutral-600 dark:text-neutral-400 mb-2">
+                    {isBulkPreEvent 
+                      ? 'Sending pre-event emails to all fully paid attendees...'
+                      : `Sending pre-event email to ${preEventAttendeeName}...`
+                    }
+                  </div>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div className="bg-blue-600 h-2 rounded-full animate-pulse" style={{ width: '100%' }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   )
@@ -1032,16 +1066,16 @@ function SendPreEventButton({
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="text-xs sm:text-sm">
           <MailIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-          <span className="hidden sm:inline ml-1">Pre-Event</span>
+          <span className="hidden sm:inline ml-1">Pre-Event Email</span>
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Send Pre-Event Message</DialogTitle>
+          <DialogTitle>Send Pre-Event Email</DialogTitle>
         </DialogHeader>
         <div className="py-4">
           <p className="text-sm text-neutral-600 dark:text-neutral-400">
-            Are you sure you want to send a pre-event message to <strong>{attendeeName}</strong>?
+            Are you sure you want to send a pre-event email to <strong>{attendeeName}</strong>?
           </p>
           <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-2">
             This will send an exciting pre-event message with arrival details and attach their ticket.
@@ -1052,7 +1086,7 @@ function SendPreEventButton({
             Cancel
           </Button>
           <Button onClick={handleSendPreEvent} disabled={processing}>
-            {processing ? 'Sending...' : 'Send Pre-Event Message'}
+            {processing ? 'Sending...' : 'Send Pre-Event Email'}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -1083,17 +1117,17 @@ function BulkSendPreEventButton({
       <DialogTrigger asChild>
         <Button variant="outline" disabled={fullyPaidCount === 0} size="sm" className="text-xs sm:text-sm">
           <MailIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-          <span className="hidden sm:inline">Pre-Event ({fullyPaidCount})</span>
-          <span className="sm:hidden">Pre-Event ({fullyPaidCount})</span>
+          <span className="hidden sm:inline">Pre-Event Email ({fullyPaidCount})</span>
+          <span className="sm:hidden">Pre-Event Email ({fullyPaidCount})</span>
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Send Bulk Pre-Event Messages</DialogTitle>
+          <DialogTitle>Send Bulk Pre-Event Emails</DialogTitle>
         </DialogHeader>
         <div className="py-4">
           <p className="text-sm text-neutral-600 dark:text-neutral-400">
-            Are you sure you want to send pre-event messages to <strong>{fullyPaidCount} fully paid attendees</strong>?
+            Are you sure you want to send pre-event emails to <strong>{fullyPaidCount} fully paid attendees</strong>?
           </p>
           <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-2">
             This will send exciting pre-event messages with arrival details and attach tickets to all attendees who have fully paid (Ksh. 4,999 and above).
@@ -1104,7 +1138,7 @@ function BulkSendPreEventButton({
             Cancel
           </Button>
           <Button onClick={handleBulkSendPreEvent} disabled={processing}>
-            {processing ? 'Sending...' : `Send to ${fullyPaidCount} Attendees`}
+            {processing ? 'Sending...' : `Send Emails to ${fullyPaidCount} Attendees`}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -1133,11 +1167,11 @@ function PreEventMessagePreviewDialog({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>Pre-Event Message Preview</DialogTitle>
+          <DialogTitle>Pre-Event Email Preview</DialogTitle>
           <DialogDescription>
             {isBulk 
-              ? 'Review and edit the pre-event message before sending to all fully paid attendees'
-              : `Review and edit the pre-event message for ${attendeeName}`
+              ? 'Review and edit the pre-event email before sending to all fully paid attendees'
+              : `Review and edit the pre-event email for ${attendeeName}`
             }
           </DialogDescription>
         </DialogHeader>
@@ -1170,7 +1204,7 @@ function PreEventMessagePreviewDialog({
             Cancel
           </Button>
           <Button onClick={onSend} disabled={message.length === 0 || message.length > 2000}>
-            {isBulk ? 'Send to All Attendees' : 'Send Message'}
+                      {isBulk ? 'Send Emails to All Attendees' : 'Send Email'}
           </Button>
         </DialogFooter>
       </DialogContent>
