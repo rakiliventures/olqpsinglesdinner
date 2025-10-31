@@ -168,7 +168,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Welcome to the Singles Dinner!</h1>
+            <h1>Masks Available at Venue Tonight!</h1>
             <div class="subtitle">OLQP Singles Dinner 2025</div>
         </div>
 
@@ -178,73 +178,14 @@
             </div>
 
             <div class="message">
-                <strong>Thank you for registering for the Singles Dinner scheduled for October 31st.</strong> We look forward to hosting you for an evening of fun and networking. Please find below the event details for your reference!
-            </div>
-
-            @php
-                $eventDate = \Carbon\Carbon::create(2025, 10, 31);
-                $daysRemaining = max(0, (int) now()->diffInDays($eventDate, false));
-            @endphp
-
-            <div class="event-info">
-                <h3>🎭 Event Details</h3>
-                <div class="detail-row">
-                    <span class="detail-label">Date:</span>
-                    <span class="detail-value">Oct 31, 2025</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Time:</span>
-                    <span class="detail-value">6:30PM-10:30PM</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Venue:</span>
-                    <span class="detail-value">The Boma Hotel, South C</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Days Left:</span>
-                    <span class="detail-value" style="color: #28a745; font-weight: bold;">{{ $daysRemaining }} {{ $daysRemaining == 1 ? 'day' : 'days' }}</span>
-                </div>
-            </div>
-
-            <div class="event-info">
-                <h3>🚗 Arrival & Check-in</h3>
-                <div class="detail-row">
-                    <span class="detail-label">Arrival Time:</span>
-                    <span class="detail-value">6:00 PM - 6:30 PM. Kick-off at 6:35 PM</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Check-in:</span>
-                    <span class="detail-value">Present ticket (PDF or QR code) at venue entrance</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Parking:</span>
-                    <span class="detail-value">Complimentary parking available at The Boma Hotel</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Dress Code:</span>
-                    <span class="detail-value">Elegant attire with a masquerade touch</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">What to Bring:</span>
-                    <span class="detail-value">Valid ID, your ticket, and great energy!</span>
-                </div>
-            </div>
-
-            <div class="message">
-                <strong>🎫 Your ticket</strong> Your event ticket is attached to this email. Please save it and present either the PDF or QR code at the entrance.
+                Exciting news! For those who haven't found the perfect masquerade mask yet, we'll have a vendor on-site at The Boma Hotel this evening selling beautiful masks.
                 <br><br>
-                We look forward to an evening of great food, good conversations, and meeting new people.
-            </div>
-
-            <div class="contact-info">
-                <h4>📞 Need Help?</h4>
-                <p><strong>Contact:</strong> 0712328325</p>
-                <p><strong>Email:</strong> olqpsouthbsecretary@gmail.com</p>
+                See you at 6:00 PM for an amazing night!
             </div>
         </div>
 
         <div class="footer">
-            <p>We can't wait to see you at OLQP Singles Dinner 2025!</p>
+            <p>The OLQP Singles Dinner Team</p>
             <p>© 2025 OLQP Parish. All rights reserved.</p>
         </div>
     </div>
