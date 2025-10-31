@@ -66,24 +66,11 @@ export default function AdminAttendeesIndex() {
   // Default pre-event message template
   const defaultPreEventMessage = `Dear *{name}*,
 
-*Thank you for registering for the Singles Dinner scheduled for October 31st.* We look forward to hosting you for an evening of fun and networking. Please find below the event details for your reference!
+Exciting news! For those who haven't found the perfect masquerade mask yet, we'll have a vendor on-site at The Boma Hotel this evening selling beautiful masks.
 
-🎭 *Event Details:*
-• Date: Oct 31, 2025
-• Time: 6:30PM-10:30PM
-• Venue: The Boma Hotel, South C
-• Days Left: *{days}* days
+See you at 6:00 PM for an amazing night!
 
-🚗 *Arrival & Check-in:*
-• Arrival Time: 6:00 PM - 6:30 PM. Kick-off at 6:35 PM
-• Check-in: Present ticket (PDF or QR code) at venue entrance
-• Parking: Complimentary parking available at The Boma Hotel
-• Dress Code: Elegant attire with a masquerade touch
-• What to Bring: Valid ID, your ticket, and great energy!
-
-🎫 *Your ticket* Your event ticket is attached to this email. Please save it and present either the PDF or QR code at the entrance.
-
-We look forward to an evening of great food, good conversations, and meeting new people.`
+The OLQP Singles Dinner Team`
 
   // Filter attendees based on search term
   const filteredAttendees = useMemo(() => {
@@ -164,11 +151,9 @@ We look forward to an evening of great food, good conversations, and meeting new
 
   function sendPreEvent(id: number, attendeeName?: string) {
     const attendee = attendees.find(a => a.id === id)
-    const daysRemaining = Math.max(0, Math.ceil((new Date('2025-10-31').getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))
     
     const message = defaultPreEventMessage
       .replace('{name}', attendeeName || 'Attendee')
-      .replace('{days}', daysRemaining.toString())
     
     setPreEventMessage(message)
     setPreEventAttendeeId(id)
@@ -212,11 +197,8 @@ We look forward to an evening of great food, good conversations, and meeting new
   }
 
   function bulkSendPreEvent() {
-    const daysRemaining = Math.max(0, Math.ceil((new Date('2025-10-31').getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))
-    
     const message = defaultPreEventMessage
       .replace('{name}', 'Attendee')
-      .replace('{days}', daysRemaining.toString())
     
     setPreEventMessage(message)
     setPreEventAttendeeId(null)

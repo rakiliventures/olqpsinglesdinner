@@ -41,7 +41,7 @@ class PreEventMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Welcome to the Singles Dinner on 31st at the Boma - Your Ticket Attached!',
+            subject: 'Masks Available at Venue Tonight! - Singles Dinner',
         );
     }
 
